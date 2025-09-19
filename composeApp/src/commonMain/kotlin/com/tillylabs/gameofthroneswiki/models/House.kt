@@ -19,5 +19,5 @@ data class House(
     val diedOut: String,
     val ancestralWeapons: List<String>,
     val cadetBranches: List<String>,
-    val swornMembers: List<String>
+    val swornMembers: List<String>,
 )

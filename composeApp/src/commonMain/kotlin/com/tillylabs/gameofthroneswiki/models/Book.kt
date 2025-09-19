@@ -14,5 +14,5 @@ data class Book(
     val mediaType: String,
     val released: String,
     val characters: List<String>,
-    val povCharacters: List<String>
+    val povCharacters: List<String>,
 )

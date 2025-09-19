@@ -19,5 +19,5 @@ data class Character(
     val books: List<String>,
     val povBooks: List<String>,
     val tvSeries: List<String>,
-    val playedBy: List<String>
+    val playedBy: List<String>,
 )

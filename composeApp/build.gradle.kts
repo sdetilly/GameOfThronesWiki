@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -42,7 +43,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
-            // Ktor dependencies
+            // Ktor
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
@@ -50,17 +51,22 @@ kotlin {
             // Kotlinx serialization
             implementation(libs.kotlinx.serialization.json)
 
+            // Koin
             implementation(libs.bundles.koin)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
 
-        commonTest.dependencies {
+        androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.ktor.client.mock)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.mockk)
         }
+    }
+    sourceSets.named("commonMain").configure {
+        kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
     }
 }
 
@@ -106,14 +112,20 @@ ktlint {
     }
 }
 
-tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {
-    exclude("**/generated/**")
-    exclude("**/build/**")
-}
-
 dependencies {
     debugImplementation(compose.uiTooling)
+    add("kspCommonMainMetadata", libs.koin.ksp.compiler)
 }
+
+// Make sure KSP runs before compilation
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+    if (name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
+
+tasks["runKtlintFormatOverCommonMainSourceSet"].dependsOn("kspCommonMainKotlinMetadata")
+tasks["runKtlintCheckOverCommonMainSourceSet"].dependsOn("kspCommonMainKotlinMetadata")
 
 val ctlf: Task by tasks.creating {
     group = "verification"

@@ -1,0 +1,117 @@
+package com.tillylabs.gameofthroneswiki.ui.characters
+
+import com.tillylabs.gameofthroneswiki.models.Character
+import com.tillylabs.gameofthroneswiki.usecase.GetCharactersUseCase
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class CharactersViewModelTest {
+    private val mockGetCharactersUseCase = mockk<GetCharactersUseCase>()
+    private val testDispatcher = StandardTestDispatcher()
+
+    @BeforeTest
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `should load characters successfully`() =
+        runTest(testDispatcher) {
+            // Given
+            val expectedCharacters =
+                listOf(
+                    Character(
+                        url = "https://anapioficeandfire.com/api/characters/1",
+                        name = "Jon Snow",
+                        gender = "Male",
+                        culture = "Northmen",
+                        born = "In 283 AC",
+                        died = "",
+                        titles = listOf("Lord Commander of the Night's Watch"),
+                        aliases = listOf("Lord Snow"),
+                        father = "",
+                        mother = "",
+                        spouse = "",
+                        allegiances = emptyList(),
+                        books = emptyList(),
+                        povBooks = emptyList(),
+                        tvSeries = emptyList(),
+                        playedBy = emptyList(),
+                    ),
+                )
+            coEvery { mockGetCharactersUseCase() } returns expectedCharacters
+
+            // When
+            val viewModel = CharactersViewModel(mockGetCharactersUseCase)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val finalState = viewModel.uiState.value
+            assertFalse(finalState.isLoading)
+            assertEquals(expectedCharacters, finalState.characters)
+            assertNull(finalState.error)
+
+            coVerify(exactly = 1) { mockGetCharactersUseCase() }
+        }
+
+    @Test
+    fun `should handle error state`() =
+        runTest(testDispatcher) {
+            // Given
+            val errorMessage = "API error"
+            coEvery { mockGetCharactersUseCase() } throws RuntimeException(errorMessage)
+
+            // When
+            val viewModel = CharactersViewModel(mockGetCharactersUseCase)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val errorState = viewModel.uiState.value
+            assertFalse(errorState.isLoading)
+            assertEquals(emptyList(), errorState.characters)
+            assertEquals(errorMessage, errorState.error)
+
+            coVerify(exactly = 1) { mockGetCharactersUseCase() }
+        }
+
+    @Test
+    fun `retry should reload characters`() =
+        runTest(testDispatcher) {
+            // Given
+            val characters = listOf(mockk<Character>())
+            coEvery { mockGetCharactersUseCase() } returns characters
+
+            // When
+            val viewModel = CharactersViewModel(mockGetCharactersUseCase)
+            testDispatcher.scheduler.advanceUntilIdle()
+            viewModel.retry()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val finalState = viewModel.uiState.value
+            assertFalse(finalState.isLoading)
+            assertEquals(characters, finalState.characters)
+            assertNull(finalState.error)
+
+            coVerify(exactly = 2) { mockGetCharactersUseCase() }
+        }
+}

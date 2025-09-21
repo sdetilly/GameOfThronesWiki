@@ -71,6 +71,36 @@ fun CharactersScreen(modifier: Modifier = Modifier) {
                     items(uiState.characters) { character ->
                         CharacterItem(character = character)
                     }
+
+                    if (uiState.hasMoreData) {
+                        item {
+                            if (uiState.isLoadingMore) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            } else {
+                                // Trigger load more when this item becomes visible
+                                androidx.compose.runtime.LaunchedEffect(Unit) {
+                                    viewModel.loadMoreCharacters()
+                                }
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

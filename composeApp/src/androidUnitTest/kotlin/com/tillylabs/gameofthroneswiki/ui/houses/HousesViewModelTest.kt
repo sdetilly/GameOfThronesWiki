@@ -59,6 +59,7 @@ class HousesViewModelTest {
                     ),
                 )
             coEvery { mockGetHousesUseCase() } returns expectedHouses
+            coEvery { mockGetHousesUseCase.hasMore() } returns false
 
             // When
             val viewModel = HousesViewModel(mockGetHousesUseCase)
@@ -69,8 +70,10 @@ class HousesViewModelTest {
             assertFalse(finalState.isLoading)
             assertEquals(expectedHouses, finalState.houses)
             assertNull(finalState.error)
+            assertFalse(finalState.hasMoreData)
 
             coVerify(exactly = 1) { mockGetHousesUseCase() }
+            coVerify(exactly = 1) { mockGetHousesUseCase.hasMore() }
         }
 
     @Test
@@ -99,6 +102,7 @@ class HousesViewModelTest {
             // Given
             val houses = listOf(mockk<House>())
             coEvery { mockGetHousesUseCase() } returns houses
+            coEvery { mockGetHousesUseCase.hasMore() } returns true
 
             // When
             val viewModel = HousesViewModel(mockGetHousesUseCase)
@@ -113,5 +117,6 @@ class HousesViewModelTest {
             assertNull(finalState.error)
 
             coVerify(exactly = 2) { mockGetHousesUseCase() }
+            coVerify(exactly = 2) { mockGetHousesUseCase.hasMore() }
         }
 }

@@ -12,7 +12,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
 class GameOfThronesRepositoryTest {
@@ -100,9 +99,9 @@ class GameOfThronesRepositoryTest {
             assertEquals(expectedCharacters, result1)
             coVerify(exactly = 1) { mockHttpClient.fetchCharacters(1) }
 
-            // When - second call should use cache
+            // When - second call should use cache (no new API call)
             val result2 = repository.getCharacters()
-            assertSame(result1, result2)
+            assertEquals(expectedCharacters, result2)
             coVerify(exactly = 1) { mockHttpClient.fetchCharacters(1) }
         }
 
@@ -140,9 +139,9 @@ class GameOfThronesRepositoryTest {
             assertEquals(expectedHouses, result1)
             coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
 
-            // When - second call should use cache
+            // When - second call should use cache (no new API call)
             val result2 = repository.getHouses()
-            assertSame(result1, result2)
+            assertEquals(expectedHouses, result2)
             coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
         }
 
@@ -209,9 +208,11 @@ class GameOfThronesRepositoryTest {
             val resultCharacters = repository.getCharacters()
             val resultHouses = repository.getHouses()
 
-            assertNotSame(cachedBooks, resultBooks)
-            assertNotSame(characters, resultCharacters)
-            assertNotSame(houses, resultHouses)
+            // After clearing cache, the new data should be different
+            assertEquals(1, resultBooks.size)
+            assertEquals("New Test Book", resultBooks[0].name)
+            assertEquals(newCharacters, resultCharacters)
+            assertEquals(newHouses, resultHouses)
 
             coVerify(exactly = 2) { mockHttpClient.fetchBooks(1) }
             coVerify(exactly = 2) { mockHttpClient.fetchCharacters(1) }

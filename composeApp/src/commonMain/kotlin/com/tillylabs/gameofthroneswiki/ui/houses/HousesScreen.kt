@@ -71,6 +71,36 @@ fun HousesScreen(modifier: Modifier = Modifier) {
                     items(uiState.houses) { house ->
                         HouseItem(house = house)
                     }
+
+                    if (uiState.hasMoreData) {
+                        item {
+                            if (uiState.isLoadingMore) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            } else {
+                                // Trigger load more when this item becomes visible
+                                androidx.compose.runtime.LaunchedEffect(Unit) {
+                                    viewModel.loadMoreHouses()
+                                }
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -9,4 +9,8 @@ class GetBooksUseCase(
     private val repository: GameOfThronesRepository,
 ) {
     suspend operator fun invoke(): List<BookWithCover> = repository.getBooks()
+
+    suspend fun loadMore(): List<BookWithCover> = repository.loadMoreBooks()
+
+    fun hasMore(): Boolean = repository.hasMoreBooks()
 }

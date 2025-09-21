@@ -48,6 +48,7 @@ class CharactersViewModelTest {
                     ),
                 )
             coEvery { mockGetCharactersUseCase() } returns expectedCharacters
+            coEvery { mockGetCharactersUseCase.hasMore() } returns false
 
             // When
             val viewModel = CharactersViewModel(mockGetCharactersUseCase)
@@ -58,8 +59,10 @@ class CharactersViewModelTest {
             assertFalse(finalState.isLoading)
             assertEquals(expectedCharacters, finalState.characters)
             assertNull(finalState.error)
+            assertFalse(finalState.hasMoreData)
 
             coVerify(exactly = 1) { mockGetCharactersUseCase() }
+            coVerify(exactly = 1) { mockGetCharactersUseCase.hasMore() }
         }
 
     @Test
@@ -88,6 +91,7 @@ class CharactersViewModelTest {
             // Given
             val characters = listOf(createCharacter(name = "Test Character"))
             coEvery { mockGetCharactersUseCase() } returns characters
+            coEvery { mockGetCharactersUseCase.hasMore() } returns true
 
             // When
             val viewModel = CharactersViewModel(mockGetCharactersUseCase)
@@ -102,5 +106,6 @@ class CharactersViewModelTest {
             assertNull(finalState.error)
 
             coVerify(exactly = 2) { mockGetCharactersUseCase() }
+            coVerify(exactly = 2) { mockGetCharactersUseCase.hasMore() }
         }
 }

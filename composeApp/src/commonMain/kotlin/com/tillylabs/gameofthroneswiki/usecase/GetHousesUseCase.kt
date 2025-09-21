@@ -9,4 +9,8 @@ class GetHousesUseCase(
     private val repository: GameOfThronesRepository,
 ) {
     suspend operator fun invoke(): List<House> = repository.getHouses()
+
+    suspend fun loadMore(): List<House> = repository.loadMoreHouses()
+
+    fun hasMore(): Boolean = repository.hasMoreHouses()
 }

@@ -31,11 +31,35 @@ class CharactersViewModel(
                         characters = characters,
                         isLoading = false,
                         error = null,
+                        hasMoreData = getCharactersUseCase.hasMore(),
                     )
             } catch (e: Exception) {
                 _uiState.value =
                     _uiState.value.copy(
                         isLoading = false,
+                        error = e.message ?: "Unknown error occurred",
+                    )
+            }
+        }
+    }
+
+    fun loadMoreCharacters() {
+        if (_uiState.value.isLoadingMore || !_uiState.value.hasMoreData) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingMore = true)
+            try {
+                val characters = getCharactersUseCase.loadMore()
+                _uiState.value =
+                    _uiState.value.copy(
+                        characters = characters,
+                        isLoadingMore = false,
+                        hasMoreData = getCharactersUseCase.hasMore(),
+                    )
+            } catch (e: Exception) {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isLoadingMore = false,
                         error = e.message ?: "Unknown error occurred",
                     )
             }
@@ -50,5 +74,7 @@ class CharactersViewModel(
 data class CharactersUiState(
     val characters: List<Character> = emptyList(),
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val hasMoreData: Boolean = true,
     val error: String? = null,
 )

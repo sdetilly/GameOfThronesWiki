@@ -12,4 +12,11 @@ class GetCharactersUseCase(
         repository
             .getCharacters()
             .filter { it.name.isNotEmpty() }
+
+    suspend fun loadMore(): List<Character> =
+        repository
+            .loadMoreCharacters()
+            .filter { it.name.isNotEmpty() }
+
+    fun hasMore(): Boolean = repository.hasMoreCharacters()
 }

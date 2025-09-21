@@ -1,6 +1,6 @@
 package com.tillylabs.gameofthroneswiki.usecase
 
-import com.tillylabs.gameofthroneswiki.models.Book
+import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -19,7 +19,7 @@ class GetBooksUseCaseTest {
             // Given
             val expectedBooks =
                 listOf(
-                    Book(
+                    BookWithCover(
                         url = "https://anapioficeandfire.com/api/books/1",
                         name = "A Game of Thrones",
                         isbn = "978-0553103540",
@@ -31,8 +31,9 @@ class GetBooksUseCaseTest {
                         released = "1996-08-01T00:00:00",
                         characters = emptyList(),
                         povCharacters = emptyList(),
+                        coverImageUrl = "https://example.com/got-cover.jpg",
                     ),
-                    Book(
+                    BookWithCover(
                         url = "https://anapioficeandfire.com/api/books/2",
                         name = "A Clash of Kings",
                         isbn = "978-0553108033",
@@ -44,6 +45,7 @@ class GetBooksUseCaseTest {
                         released = "1999-02-02T00:00:00",
                         characters = emptyList(),
                         povCharacters = emptyList(),
+                        coverImageUrl = "https://example.com/cok-cover.jpg",
                     ),
                 )
             coEvery { mockRepository.getBooks() } returns expectedBooks

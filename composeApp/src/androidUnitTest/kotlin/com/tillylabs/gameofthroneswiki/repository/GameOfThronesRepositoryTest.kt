@@ -2,6 +2,7 @@ package com.tillylabs.gameofthroneswiki.repository
 
 import com.tillylabs.gameofthroneswiki.http.GameOfThronesHttp
 import com.tillylabs.gameofthroneswiki.models.Book
+import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.models.House
 import io.mockk.coEvery
@@ -21,38 +22,58 @@ class GameOfThronesRepositoryTest {
     fun `getBooks should fetch from API and cache result`() =
         runTest {
             // Given
-            val expectedBooks =
+            val book =
+                Book(
+                    url = "https://anapioficeandfire.com/api/books/1",
+                    name = "A Game of Thrones",
+                    isbn = "978-0553103540",
+                    authors = listOf("George R. R. Martin"),
+                    numberOfPages = 694,
+                    publisher = "Bantam Books",
+                    country = "United States",
+                    mediaType = "Hardcover",
+                    released = "1996-08-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                )
+            val expectedCoverUrl = "https://example.com/cover.jpg"
+            val expectedBooksWithCover =
                 listOf(
-                    Book(
-                        url = "https://anapioficeandfire.com/api/books/1",
-                        name = "A Game of Thrones",
-                        isbn = "978-0553103540",
-                        authors = listOf("George R. R. Martin"),
-                        numberOfPages = 694,
-                        publisher = "Bantam Books",
-                        country = "United States",
-                        mediaType = "Hardcover",
-                        released = "1996-08-01T00:00:00",
-                        characters = emptyList(),
-                        povCharacters = emptyList(),
+                    BookWithCover(
+                        url = book.url,
+                        name = book.name,
+                        isbn = book.isbn,
+                        authors = book.authors,
+                        numberOfPages = book.numberOfPages,
+                        publisher = book.publisher,
+                        country = book.country,
+                        mediaType = book.mediaType,
+                        released = book.released,
+                        characters = book.characters,
+                        povCharacters = book.povCharacters,
+                        coverImageUrl = expectedCoverUrl,
                     ),
                 )
-            coEvery { mockHttpClient.fetchBooks(1) } returns expectedBooks
+
+            coEvery { mockHttpClient.fetchBooks(1) } returns listOf(book)
+            coEvery { mockHttpClient.fetchBookCover(book.isbn) } returns expectedCoverUrl
 
             // When - first call
             val result1 = repository.getBooks()
 
             // Then - should fetch from API
-            assertEquals(expectedBooks, result1)
+            assertEquals(expectedBooksWithCover, result1)
             coVerify(exactly = 1) { mockHttpClient.fetchBooks(1) }
+            coVerify(exactly = 1) { mockHttpClient.fetchBookCover(book.isbn) }
 
             // When - second call
             val result2 = repository.getBooks()
 
             // Then - should return cached result without API call
-            assertEquals(expectedBooks, result2)
+            assertEquals(expectedBooksWithCover, result2)
             assertSame(result1, result2) // Same instance from cache
             coVerify(exactly = 1) { mockHttpClient.fetchBooks(1) } // Still only one API call
+            coVerify(exactly = 1) { mockHttpClient.fetchBookCover(book.isbn) } // Still only one cover fetch
         }
 
     @Test
@@ -139,16 +160,31 @@ class GameOfThronesRepositoryTest {
     fun `clearCache should reset all cached data`() =
         runTest {
             // Given - setup cached data
-            val books = listOf(mockk<Book>())
+            val book =
+                Book(
+                    url = "https://example.com/book/1",
+                    name = "Test Book",
+                    isbn = "123456789",
+                    authors = listOf("Test Author"),
+                    numberOfPages = 100,
+                    publisher = "Test Publisher",
+                    country = "Test Country",
+                    mediaType = "Hardcover",
+                    released = "2000-01-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                )
+            val books = listOf(book)
             val characters = listOf(mockk<Character>())
             val houses = listOf(mockk<House>())
 
             coEvery { mockHttpClient.fetchBooks(1) } returns books
+            coEvery { mockHttpClient.fetchBookCover(any()) } returns "https://example.com/cover.jpg"
             coEvery { mockHttpClient.fetchCharacters(1) } returns characters
             coEvery { mockHttpClient.fetchHouses(1) } returns houses
 
             // Cache all data
-            repository.getBooks()
+            val cachedBooks = repository.getBooks()
             repository.getCharacters()
             repository.getHouses()
 
@@ -156,11 +192,26 @@ class GameOfThronesRepositoryTest {
             repository.clearCache()
 
             // Then - next calls should fetch from API again
-            val newBooks = listOf(mockk<Book>())
+            val newBook =
+                Book(
+                    url = "https://example.com/book/2",
+                    name = "New Test Book",
+                    isbn = "987654321",
+                    authors = listOf("New Test Author"),
+                    numberOfPages = 200,
+                    publisher = "New Test Publisher",
+                    country = "New Test Country",
+                    mediaType = "Paperback",
+                    released = "2001-01-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                )
+            val newBooks = listOf(newBook)
             val newCharacters = listOf(mockk<Character>())
             val newHouses = listOf(mockk<House>())
 
             coEvery { mockHttpClient.fetchBooks(1) } returns newBooks
+            coEvery { mockHttpClient.fetchBookCover(newBook.isbn) } returns "https://example.com/newcover.jpg"
             coEvery { mockHttpClient.fetchCharacters(1) } returns newCharacters
             coEvery { mockHttpClient.fetchHouses(1) } returns newHouses
 
@@ -168,7 +219,7 @@ class GameOfThronesRepositoryTest {
             val resultCharacters = repository.getCharacters()
             val resultHouses = repository.getHouses()
 
-            assertNotSame(books, resultBooks)
+            assertNotSame(cachedBooks, resultBooks)
             assertNotSame(characters, resultCharacters)
             assertNotSame(houses, resultHouses)
 
@@ -191,5 +242,50 @@ class GameOfThronesRepositoryTest {
             } catch (e: Exception) {
                 assertEquals(expectedException, e)
             }
+        }
+
+    @Test
+    fun `getBooks should handle books without ISBN`() =
+        runTest {
+            // Given
+            val bookWithoutIsbn =
+                Book(
+                    url = "https://anapioficeandfire.com/api/books/1",
+                    name = "Book Without ISBN",
+                    isbn = "",
+                    authors = listOf("Test Author"),
+                    numberOfPages = 100,
+                    publisher = "Test Publisher",
+                    country = "Test Country",
+                    mediaType = "Hardcover",
+                    released = "2000-01-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                )
+            val expectedBookWithCover =
+                BookWithCover(
+                    url = bookWithoutIsbn.url,
+                    name = bookWithoutIsbn.name,
+                    isbn = bookWithoutIsbn.isbn,
+                    authors = bookWithoutIsbn.authors,
+                    numberOfPages = bookWithoutIsbn.numberOfPages,
+                    publisher = bookWithoutIsbn.publisher,
+                    country = bookWithoutIsbn.country,
+                    mediaType = bookWithoutIsbn.mediaType,
+                    released = bookWithoutIsbn.released,
+                    characters = bookWithoutIsbn.characters,
+                    povCharacters = bookWithoutIsbn.povCharacters,
+                    coverImageUrl = null,
+                )
+
+            coEvery { mockHttpClient.fetchBooks(1) } returns listOf(bookWithoutIsbn)
+
+            // When
+            val result = repository.getBooks()
+
+            // Then
+            assertEquals(listOf(expectedBookWithCover), result)
+            coVerify(exactly = 1) { mockHttpClient.fetchBooks(1) }
+            coVerify(exactly = 0) { mockHttpClient.fetchBookCover(any()) }
         }
 }

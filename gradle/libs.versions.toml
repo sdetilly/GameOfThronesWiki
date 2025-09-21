@@ -20,6 +20,7 @@ koinAnnotations = "2.1.0"
 ktlintPlugin = "13.1.0"
 ksp = "2.2.20-2.0.3"
 mockk = "1.13.14"
+coil = "3.0.4"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -56,6 +57,10 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 # Testing
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+# Image loading
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

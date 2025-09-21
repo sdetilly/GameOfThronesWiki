@@ -2,7 +2,7 @@ package com.tillylabs.gameofthroneswiki.ui.books
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tillylabs.gameofthroneswiki.models.Book
+import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.usecase.GetBooksUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +48,7 @@ class BooksViewModel(
 }
 
 data class BooksUiState(
-    val books: List<Book> = emptyList(),
+    val books: List<BookWithCover> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )

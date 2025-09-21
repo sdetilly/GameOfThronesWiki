@@ -1,6 +1,6 @@
 package com.tillylabs.gameofthroneswiki.ui.books
 
-import com.tillylabs.gameofthroneswiki.models.Book
+import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.usecase.GetBooksUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -39,7 +39,7 @@ class BooksViewModelTest {
             // Given
             val expectedBooks =
                 listOf(
-                    Book(
+                    BookWithCover(
                         url = "https://anapioficeandfire.com/api/books/1",
                         name = "A Game of Thrones",
                         isbn = "978-0553103540",
@@ -51,6 +51,7 @@ class BooksViewModelTest {
                         released = "1996-08-01T00:00:00",
                         characters = emptyList(),
                         povCharacters = emptyList(),
+                        coverImageUrl = "https://example.com/cover.jpg",
                     ),
                 )
             coEvery { mockGetBooksUseCase() } returns expectedBooks
@@ -92,7 +93,7 @@ class BooksViewModelTest {
     fun `retry should reload books`() =
         runTest(testDispatcher) {
             // Given
-            val books = listOf(mockk<Book>())
+            val books = listOf(mockk<BookWithCover>())
             coEvery { mockGetBooksUseCase() } returns books
 
             // When

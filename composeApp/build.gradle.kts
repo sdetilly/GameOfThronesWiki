@@ -53,6 +53,10 @@ kotlin {
 
             // Koin
             implementation(libs.bundles.koin)
+
+            // Image loading
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

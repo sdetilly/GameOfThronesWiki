@@ -1,6 +1,7 @@
 package com.tillylabs.gameofthroneswiki.http
 
 import com.tillylabs.gameofthroneswiki.models.Book
+import com.tillylabs.gameofthroneswiki.models.BookCoverResponse
 import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.models.House
 import io.ktor.client.HttpClient
@@ -28,6 +29,7 @@ class GameOfThronesHttp {
 
     private companion object {
         const val BASE_URL = "https://www.anapioficeandfire.com/api"
+        const val BOOK_COVER_BASE_URL = "https://bookcover.longitood.com/bookcover"
         const val PAGE_SIZE = 50
     }
 
@@ -51,6 +53,16 @@ class GameOfThronesHttp {
                 parameter("page", page)
                 parameter("pageSize", PAGE_SIZE)
             }.body()
+
+    suspend fun fetchBookCover(isbn: String): String? =
+        try {
+            httpClient
+                .get("$BOOK_COVER_BASE_URL/$isbn")
+                .body<BookCoverResponse>()
+                .url
+        } catch (e: Exception) {
+            null
+        }
 
     fun close() {
         httpClient.close()

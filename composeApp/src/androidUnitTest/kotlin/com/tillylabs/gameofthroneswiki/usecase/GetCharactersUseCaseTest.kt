@@ -1,7 +1,7 @@
 package com.tillylabs.gameofthroneswiki.usecase
 
-import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
+import com.tillylabs.gameofthroneswiki.testutils.createCharacter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -19,41 +19,20 @@ class GetCharactersUseCaseTest {
             // Given
             val expectedCharacters =
                 listOf(
-                    Character(
+                    createCharacter(
                         url = "https://anapioficeandfire.com/api/characters/1",
                         name = "Jon Snow",
-                        gender = "Male",
                         culture = "Northmen",
-                        born = "In 283 AC",
-                        died = "",
                         titles = listOf("Lord Commander of the Night's Watch"),
                         aliases = listOf("Lord Snow"),
-                        father = "",
-                        mother = "",
-                        spouse = "",
-                        allegiances = emptyList(),
-                        books = emptyList(),
-                        povBooks = emptyList(),
-                        tvSeries = emptyList(),
-                        playedBy = emptyList(),
                     ),
-                    Character(
+                    createCharacter(
                         url = "https://anapioficeandfire.com/api/characters/2",
                         name = "Tyrion Lannister",
-                        gender = "Male",
                         culture = "Westeros",
                         born = "In 273 AC",
-                        died = "",
                         titles = listOf("Hand of the King"),
                         aliases = listOf("The Imp"),
-                        father = "",
-                        mother = "",
-                        spouse = "",
-                        allegiances = emptyList(),
-                        books = emptyList(),
-                        povBooks = emptyList(),
-                        tvSeries = emptyList(),
-                        playedBy = emptyList(),
                     ),
                 )
             coEvery { mockRepository.getCharacters() } returns expectedCharacters
@@ -95,6 +74,46 @@ class GetCharactersUseCaseTest {
 
             // Then
             assertEquals(emptyList(), result)
+            coVerify(exactly = 1) { mockRepository.getCharacters() }
+        }
+
+    @Test
+    fun `invoke should filter out characters with empty names`() =
+        runTest {
+            // Given
+            val charactersFromRepository =
+                listOf(
+                    createCharacter(
+                        url = "https://anapioficeandfire.com/api/characters/1",
+                        name = "Jon Snow",
+                        culture = "Northmen",
+                        titles = listOf("Lord Commander of the Night's Watch"),
+                        aliases = listOf("Lord Snow"),
+                    ),
+                    createCharacter(
+                        url = "https://anapioficeandfire.com/api/characters/2",
+                        name = "",
+                        culture = "Westeros",
+                        born = "In 273 AC",
+                    ),
+                    createCharacter(
+                        url = "https://anapioficeandfire.com/api/characters/3",
+                        name = "Tyrion Lannister",
+                        culture = "Westeros",
+                        born = "In 273 AC",
+                        titles = listOf("Hand of the King"),
+                        aliases = listOf("The Imp"),
+                    ),
+                )
+            val expectedCharacters = charactersFromRepository.filter { it.name.isNotEmpty() }
+            coEvery { mockRepository.getCharacters() } returns charactersFromRepository
+
+            // When
+            val result = useCase()
+
+            // Then
+            assertEquals(expectedCharacters, result)
+            assertEquals(2, result.size)
             coVerify(exactly = 1) { mockRepository.getCharacters() }
         }
 }

@@ -1,6 +1,6 @@
 package com.tillylabs.gameofthroneswiki.ui.characters
 
-import com.tillylabs.gameofthroneswiki.models.Character
+import com.tillylabs.gameofthroneswiki.testutils.createCharacter
 import com.tillylabs.gameofthroneswiki.usecase.GetCharactersUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -39,23 +39,12 @@ class CharactersViewModelTest {
             // Given
             val expectedCharacters =
                 listOf(
-                    Character(
+                    createCharacter(
                         url = "https://anapioficeandfire.com/api/characters/1",
                         name = "Jon Snow",
-                        gender = "Male",
                         culture = "Northmen",
-                        born = "In 283 AC",
-                        died = "",
                         titles = listOf("Lord Commander of the Night's Watch"),
                         aliases = listOf("Lord Snow"),
-                        father = "",
-                        mother = "",
-                        spouse = "",
-                        allegiances = emptyList(),
-                        books = emptyList(),
-                        povBooks = emptyList(),
-                        tvSeries = emptyList(),
-                        playedBy = emptyList(),
                     ),
                 )
             coEvery { mockGetCharactersUseCase() } returns expectedCharacters
@@ -97,7 +86,7 @@ class CharactersViewModelTest {
     fun `retry should reload characters`() =
         runTest(testDispatcher) {
             // Given
-            val characters = listOf(mockk<Character>())
+            val characters = listOf(createCharacter(name = "Test Character"))
             coEvery { mockGetCharactersUseCase() } returns characters
 
             // When

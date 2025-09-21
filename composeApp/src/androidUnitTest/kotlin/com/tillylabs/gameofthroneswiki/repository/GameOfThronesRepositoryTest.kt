@@ -5,6 +5,7 @@ import com.tillylabs.gameofthroneswiki.models.Book
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.models.House
+import com.tillylabs.gameofthroneswiki.testutils.createCharacter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -82,23 +83,12 @@ class GameOfThronesRepositoryTest {
             // Given
             val expectedCharacters =
                 listOf(
-                    Character(
+                    createCharacter(
                         url = "https://anapioficeandfire.com/api/characters/1",
                         name = "Jon Snow",
-                        gender = "Male",
                         culture = "Northmen",
-                        born = "In 283 AC",
-                        died = "",
                         titles = listOf("Lord Commander of the Night's Watch"),
                         aliases = listOf("Lord Snow"),
-                        father = "",
-                        mother = "",
-                        spouse = "",
-                        allegiances = emptyList(),
-                        books = emptyList(),
-                        povBooks = emptyList(),
-                        tvSeries = emptyList(),
-                        playedBy = emptyList(),
                     ),
                 )
             coEvery { mockHttpClient.fetchCharacters(1) } returns expectedCharacters

@@ -8,5 +8,8 @@ import org.koin.core.annotation.Factory
 class GetCharactersUseCase(
     private val repository: GameOfThronesRepository,
 ) {
-    suspend operator fun invoke(): List<Character> = repository.getCharacters()
+    suspend operator fun invoke(): List<Character> =
+        repository
+            .getCharacters()
+            .filter { it.name.isNotEmpty() }
 }

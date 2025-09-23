@@ -5,10 +5,10 @@ import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
 import org.koin.core.annotation.Factory
 
 @Factory
-class GetCharactersUseCase(
+class CharactersUseCase(
     private val repository: GameOfThronesRepository,
 ) {
-    suspend operator fun invoke(): List<Character> =
+    suspend fun characters(): List<Character> =
         repository
             .getCharacters()
             .filter { it.name.isNotEmpty() }

@@ -5,10 +5,10 @@ import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
 import org.koin.core.annotation.Factory
 
 @Factory
-class GetHousesUseCase(
+class HousesUseCase(
     private val repository: GameOfThronesRepository,
 ) {
-    suspend operator fun invoke(): List<House> = repository.getHouses()
+    suspend fun houses(): List<House> = repository.getHouses()
 
     suspend fun loadMore(): List<House> = repository.loadMoreHouses()
 

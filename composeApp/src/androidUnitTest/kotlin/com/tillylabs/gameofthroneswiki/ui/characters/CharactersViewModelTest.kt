@@ -1,7 +1,7 @@
 package com.tillylabs.gameofthroneswiki.ui.characters
 
 import com.tillylabs.gameofthroneswiki.testutils.createCharacter
-import com.tillylabs.gameofthroneswiki.usecase.GetCharactersUseCase
+import com.tillylabs.gameofthroneswiki.usecase.CharactersUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -20,7 +20,7 @@ import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CharactersViewModelTest {
-    private val mockGetCharactersUseCase = mockk<GetCharactersUseCase>()
+    private val mockCharactersUseCase = mockk<CharactersUseCase>()
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
@@ -47,11 +47,11 @@ class CharactersViewModelTest {
                         aliases = listOf("Lord Snow"),
                     ),
                 )
-            coEvery { mockGetCharactersUseCase() } returns expectedCharacters
-            coEvery { mockGetCharactersUseCase.hasMore() } returns false
+            coEvery { mockCharactersUseCase.characters() } returns expectedCharacters
+            coEvery { mockCharactersUseCase.hasMore() } returns false
 
             // When
-            val viewModel = CharactersViewModel(mockGetCharactersUseCase)
+            val viewModel = CharactersViewModel(mockCharactersUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -61,8 +61,8 @@ class CharactersViewModelTest {
             assertNull(finalState.error)
             assertFalse(finalState.hasMoreData)
 
-            coVerify(exactly = 1) { mockGetCharactersUseCase() }
-            coVerify(exactly = 1) { mockGetCharactersUseCase.hasMore() }
+            coVerify(exactly = 1) { mockCharactersUseCase.characters() }
+            coVerify(exactly = 1) { mockCharactersUseCase.hasMore() }
         }
 
     @Test
@@ -70,10 +70,10 @@ class CharactersViewModelTest {
         runTest(testDispatcher) {
             // Given
             val errorMessage = "API error"
-            coEvery { mockGetCharactersUseCase() } throws RuntimeException(errorMessage)
+            coEvery { mockCharactersUseCase.characters() } throws RuntimeException(errorMessage)
 
             // When
-            val viewModel = CharactersViewModel(mockGetCharactersUseCase)
+            val viewModel = CharactersViewModel(mockCharactersUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -82,7 +82,7 @@ class CharactersViewModelTest {
             assertEquals(emptyList(), errorState.characters)
             assertEquals(errorMessage, errorState.error)
 
-            coVerify(exactly = 1) { mockGetCharactersUseCase() }
+            coVerify(exactly = 1) { mockCharactersUseCase.characters() }
         }
 
     @Test
@@ -90,11 +90,11 @@ class CharactersViewModelTest {
         runTest(testDispatcher) {
             // Given
             val characters = listOf(createCharacter(name = "Test Character"))
-            coEvery { mockGetCharactersUseCase() } returns characters
-            coEvery { mockGetCharactersUseCase.hasMore() } returns true
+            coEvery { mockCharactersUseCase.characters() } returns characters
+            coEvery { mockCharactersUseCase.hasMore() } returns true
 
             // When
-            val viewModel = CharactersViewModel(mockGetCharactersUseCase)
+            val viewModel = CharactersViewModel(mockCharactersUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
             viewModel.retry()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -105,7 +105,7 @@ class CharactersViewModelTest {
             assertEquals(characters, finalState.characters)
             assertNull(finalState.error)
 
-            coVerify(exactly = 2) { mockGetCharactersUseCase() }
-            coVerify(exactly = 2) { mockGetCharactersUseCase.hasMore() }
+            coVerify(exactly = 2) { mockCharactersUseCase.characters() }
+            coVerify(exactly = 2) { mockCharactersUseCase.hasMore() }
         }
 }

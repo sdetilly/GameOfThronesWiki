@@ -3,7 +3,7 @@ package com.tillylabs.gameofthroneswiki.ui.houses
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tillylabs.gameofthroneswiki.models.House
-import com.tillylabs.gameofthroneswiki.usecase.GetHousesUseCase
+import com.tillylabs.gameofthroneswiki.usecase.HousesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +12,7 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class HousesViewModel(
-    private val getHousesUseCase: GetHousesUseCase,
+    private val housesUseCase: HousesUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HousesUiState())
     val uiState: StateFlow<HousesUiState> = _uiState.asStateFlow()
@@ -25,13 +25,13 @@ class HousesViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val houses = getHousesUseCase()
+                val houses = housesUseCase.houses()
                 _uiState.value =
                     _uiState.value.copy(
                         houses = houses,
                         isLoading = false,
                         error = null,
-                        hasMoreData = getHousesUseCase.hasMore(),
+                        hasMoreData = housesUseCase.hasMore(),
                     )
             } catch (e: Exception) {
                 _uiState.value =
@@ -49,12 +49,12 @@ class HousesViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingMore = true)
             try {
-                val houses = getHousesUseCase.loadMore()
+                val houses = housesUseCase.loadMore()
                 _uiState.value =
                     _uiState.value.copy(
                         houses = houses,
                         isLoadingMore = false,
-                        hasMoreData = getHousesUseCase.hasMore(),
+                        hasMoreData = housesUseCase.hasMore(),
                     )
             } catch (e: Exception) {
                 _uiState.value =

@@ -1,7 +1,7 @@
 package com.tillylabs.gameofthroneswiki.ui.books
 
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
-import com.tillylabs.gameofthroneswiki.usecase.GetBooksUseCase
+import com.tillylabs.gameofthroneswiki.usecase.BooksUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -20,7 +20,7 @@ import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BooksViewModelTest {
-    private val mockGetBooksUseCase = mockk<GetBooksUseCase>()
+    private val mockBooksUseCase = mockk<BooksUseCase>()
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
@@ -54,10 +54,10 @@ class BooksViewModelTest {
                         coverImageUrl = "https://example.com/cover.jpg",
                     ),
                 )
-            coEvery { mockGetBooksUseCase() } returns expectedBooks
+            coEvery { mockBooksUseCase.booksWithCover() } returns expectedBooks
 
             // When
-            val viewModel = BooksViewModel(mockGetBooksUseCase)
+            val viewModel = BooksViewModel(mockBooksUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -66,7 +66,7 @@ class BooksViewModelTest {
             assertEquals(expectedBooks, finalState.books)
             assertNull(finalState.error)
 
-            coVerify(exactly = 1) { mockGetBooksUseCase() }
+            coVerify(exactly = 1) { mockBooksUseCase.booksWithCover() }
         }
 
     @Test
@@ -74,10 +74,10 @@ class BooksViewModelTest {
         runTest(testDispatcher) {
             // Given
             val errorMessage = "Network error"
-            coEvery { mockGetBooksUseCase() } throws RuntimeException(errorMessage)
+            coEvery { mockBooksUseCase.booksWithCover() } throws RuntimeException(errorMessage)
 
             // When
-            val viewModel = BooksViewModel(mockGetBooksUseCase)
+            val viewModel = BooksViewModel(mockBooksUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -86,7 +86,7 @@ class BooksViewModelTest {
             assertEquals(emptyList(), errorState.books)
             assertEquals(errorMessage, errorState.error)
 
-            coVerify(exactly = 1) { mockGetBooksUseCase() }
+            coVerify(exactly = 1) { mockBooksUseCase.booksWithCover() }
         }
 
     @Test
@@ -94,10 +94,10 @@ class BooksViewModelTest {
         runTest(testDispatcher) {
             // Given
             val books = listOf(mockk<BookWithCover>())
-            coEvery { mockGetBooksUseCase() } returns books
+            coEvery { mockBooksUseCase.booksWithCover() } returns books
 
             // When
-            val viewModel = BooksViewModel(mockGetBooksUseCase)
+            val viewModel = BooksViewModel(mockBooksUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
             viewModel.retry()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -108,17 +108,17 @@ class BooksViewModelTest {
             assertEquals(books, finalState.books)
             assertNull(finalState.error)
 
-            coVerify(exactly = 2) { mockGetBooksUseCase() }
+            coVerify(exactly = 2) { mockBooksUseCase.booksWithCover() }
         }
 
     @Test
     fun `should handle empty books list`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { mockGetBooksUseCase() } returns emptyList()
+            coEvery { mockBooksUseCase.booksWithCover() } returns emptyList()
 
             // When
-            val viewModel = BooksViewModel(mockGetBooksUseCase)
+            val viewModel = BooksViewModel(mockBooksUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -127,6 +127,6 @@ class BooksViewModelTest {
             assertEquals(emptyList(), finalState.books)
             assertNull(finalState.error)
 
-            coVerify(exactly = 1) { mockGetBooksUseCase() }
+            coVerify(exactly = 1) { mockBooksUseCase.booksWithCover() }
         }
 }

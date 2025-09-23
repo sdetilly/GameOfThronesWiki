@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class GetHousesUseCaseTest {
     private val mockRepository = mockk<GameOfThronesRepository>()
-    private val useCase = GetHousesUseCase(mockRepository)
+    private val useCase = HousesUseCase(mockRepository)
 
     @Test
     fun `invoke should return houses from repository`() =
@@ -59,7 +59,7 @@ class GetHousesUseCaseTest {
             coEvery { mockRepository.getHouses() } returns expectedHouses
 
             // When
-            val result = useCase()
+            val result = useCase.houses()
 
             // Then
             assertEquals(expectedHouses, result)
@@ -75,7 +75,7 @@ class GetHousesUseCaseTest {
 
             // When & Then
             try {
-                useCase()
+                useCase.houses()
                 throw AssertionError("Should have thrown exception")
             } catch (e: Exception) {
                 assertEquals(expectedException, e)
@@ -91,7 +91,7 @@ class GetHousesUseCaseTest {
             coEvery { mockRepository.getHouses() } returns emptyList()
 
             // When
-            val result = useCase()
+            val result = useCase.houses()
 
             // Then
             assertEquals(emptyList(), result)

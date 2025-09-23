@@ -3,7 +3,7 @@ package com.tillylabs.gameofthroneswiki.ui.books
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
-import com.tillylabs.gameofthroneswiki.usecase.GetBooksUseCase
+import com.tillylabs.gameofthroneswiki.usecase.BooksUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +12,7 @@ import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class BooksViewModel(
-    private val getBooksUseCase: GetBooksUseCase,
+    private val booksUseCase: BooksUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(BooksUiState())
     val uiState: StateFlow<BooksUiState> = _uiState.asStateFlow()
@@ -25,7 +25,7 @@ class BooksViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val books = getBooksUseCase()
+                val books = booksUseCase.booksWithCover()
                 _uiState.value =
                     _uiState.value.copy(
                         books = books,

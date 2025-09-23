@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class GetCharactersUseCaseTest {
     private val mockRepository = mockk<GameOfThronesRepository>()
-    private val useCase = GetCharactersUseCase(mockRepository)
+    private val useCase = CharactersUseCase(mockRepository)
 
     @Test
     fun `invoke should return characters from repository`() =
@@ -38,7 +38,7 @@ class GetCharactersUseCaseTest {
             coEvery { mockRepository.getCharacters() } returns expectedCharacters
 
             // When
-            val result = useCase()
+            val result = useCase.characters()
 
             // Then
             assertEquals(expectedCharacters, result)
@@ -54,7 +54,7 @@ class GetCharactersUseCaseTest {
 
             // When & Then
             try {
-                useCase()
+                useCase.characters()
                 throw AssertionError("Should have thrown exception")
             } catch (e: Exception) {
                 assertEquals(expectedException, e)
@@ -70,7 +70,7 @@ class GetCharactersUseCaseTest {
             coEvery { mockRepository.getCharacters() } returns emptyList()
 
             // When
-            val result = useCase()
+            val result = useCase.characters()
 
             // Then
             assertEquals(emptyList(), result)
@@ -109,7 +109,7 @@ class GetCharactersUseCaseTest {
             coEvery { mockRepository.getCharacters() } returns charactersFromRepository
 
             // When
-            val result = useCase()
+            val result = useCase.characters()
 
             // Then
             assertEquals(expectedCharacters, result)

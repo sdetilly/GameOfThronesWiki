@@ -5,12 +5,8 @@ import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
 import org.koin.core.annotation.Factory
 
 @Factory
-class GetBooksUseCase(
+class BooksUseCase(
     private val repository: GameOfThronesRepository,
 ) {
-    suspend operator fun invoke(): List<BookWithCover> = repository.getBooks()
-
-    suspend fun loadMore(): List<BookWithCover> = repository.loadMoreBooks()
-
-    fun hasMore(): Boolean = repository.hasMoreBooks()
+    suspend fun booksWithCover(): List<BookWithCover> = repository.getBooks()
 }

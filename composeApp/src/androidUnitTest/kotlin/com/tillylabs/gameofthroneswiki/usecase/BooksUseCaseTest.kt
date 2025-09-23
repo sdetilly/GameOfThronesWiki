@@ -9,9 +9,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class GetBooksUseCaseTest {
+class BooksUseCaseTest {
     private val mockRepository = mockk<GameOfThronesRepository>()
-    private val useCase = GetBooksUseCase(mockRepository)
+    private val useCase = BooksUseCase(mockRepository)
 
     @Test
     fun `invoke should return books from repository`() =
@@ -51,7 +51,7 @@ class GetBooksUseCaseTest {
             coEvery { mockRepository.getBooks() } returns expectedBooks
 
             // When
-            val result = useCase()
+            val result = useCase.booksWithCover()
 
             // Then
             assertEquals(expectedBooks, result)
@@ -67,7 +67,7 @@ class GetBooksUseCaseTest {
 
             // When & Then
             try {
-                useCase()
+                useCase.booksWithCover()
                 throw AssertionError("Should have thrown exception")
             } catch (e: Exception) {
                 assertEquals(expectedException, e)
@@ -83,7 +83,7 @@ class GetBooksUseCaseTest {
             coEvery { mockRepository.getBooks() } returns emptyList()
 
             // When
-            val result = useCase()
+            val result = useCase.booksWithCover()
 
             // Then
             assertEquals(emptyList(), result)

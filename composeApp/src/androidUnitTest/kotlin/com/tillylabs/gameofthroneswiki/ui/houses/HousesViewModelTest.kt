@@ -1,7 +1,7 @@
 package com.tillylabs.gameofthroneswiki.ui.houses
 
 import com.tillylabs.gameofthroneswiki.models.House
-import com.tillylabs.gameofthroneswiki.usecase.GetHousesUseCase
+import com.tillylabs.gameofthroneswiki.usecase.HousesUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -20,7 +20,7 @@ import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HousesViewModelTest {
-    private val mockGetHousesUseCase = mockk<GetHousesUseCase>()
+    private val mockHousesUseCase = mockk<HousesUseCase>()
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
@@ -58,11 +58,11 @@ class HousesViewModelTest {
                         swornMembers = emptyList(),
                     ),
                 )
-            coEvery { mockGetHousesUseCase() } returns expectedHouses
-            coEvery { mockGetHousesUseCase.hasMore() } returns false
+            coEvery { mockHousesUseCase.houses() } returns expectedHouses
+            coEvery { mockHousesUseCase.hasMore() } returns false
 
             // When
-            val viewModel = HousesViewModel(mockGetHousesUseCase)
+            val viewModel = HousesViewModel(mockHousesUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -72,8 +72,8 @@ class HousesViewModelTest {
             assertNull(finalState.error)
             assertFalse(finalState.hasMoreData)
 
-            coVerify(exactly = 1) { mockGetHousesUseCase() }
-            coVerify(exactly = 1) { mockGetHousesUseCase.hasMore() }
+            coVerify(exactly = 1) { mockHousesUseCase.houses() }
+            coVerify(exactly = 1) { mockHousesUseCase.hasMore() }
         }
 
     @Test
@@ -81,10 +81,10 @@ class HousesViewModelTest {
         runTest(testDispatcher) {
             // Given
             val errorMessage = "Server error"
-            coEvery { mockGetHousesUseCase() } throws RuntimeException(errorMessage)
+            coEvery { mockHousesUseCase.houses() } throws RuntimeException(errorMessage)
 
             // When
-            val viewModel = HousesViewModel(mockGetHousesUseCase)
+            val viewModel = HousesViewModel(mockHousesUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -93,7 +93,7 @@ class HousesViewModelTest {
             assertEquals(emptyList(), errorState.houses)
             assertEquals(errorMessage, errorState.error)
 
-            coVerify(exactly = 1) { mockGetHousesUseCase() }
+            coVerify(exactly = 1) { mockHousesUseCase.houses() }
         }
 
     @Test
@@ -101,11 +101,11 @@ class HousesViewModelTest {
         runTest(testDispatcher) {
             // Given
             val houses = listOf(mockk<House>())
-            coEvery { mockGetHousesUseCase() } returns houses
-            coEvery { mockGetHousesUseCase.hasMore() } returns true
+            coEvery { mockHousesUseCase.houses() } returns houses
+            coEvery { mockHousesUseCase.hasMore() } returns true
 
             // When
-            val viewModel = HousesViewModel(mockGetHousesUseCase)
+            val viewModel = HousesViewModel(mockHousesUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
             viewModel.retry()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -116,7 +116,7 @@ class HousesViewModelTest {
             assertEquals(houses, finalState.houses)
             assertNull(finalState.error)
 
-            coVerify(exactly = 2) { mockGetHousesUseCase() }
-            coVerify(exactly = 2) { mockGetHousesUseCase.hasMore() }
+            coVerify(exactly = 2) { mockHousesUseCase.houses() }
+            coVerify(exactly = 2) { mockHousesUseCase.hasMore() }
         }
 }

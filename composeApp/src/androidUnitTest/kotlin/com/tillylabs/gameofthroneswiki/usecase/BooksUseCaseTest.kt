@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class BooksUseCaseTest {
     private val mockRepository = mockk<GameOfThronesRepository>()
-    private val useCase = BooksUseCase(mockRepository)
+    private val useCase = BooksUseCaseImpl(mockRepository)
 
     @Test
     fun `invoke should return books from repository`() =

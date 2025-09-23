@@ -30,12 +30,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
+import com.tillylabs.gameofthroneswiki.usecase.BooksUseCasePreview
+import com.tillylabs.gameofthroneswiki.usecase.PreviewState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun BooksScreen(modifier: Modifier = Modifier) {
-    val viewModel: BooksViewModel = koinViewModel()
+fun BooksScreen(
+    modifier: Modifier = Modifier,
+    viewModel: BooksViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -70,13 +74,25 @@ fun BooksScreen(modifier: Modifier = Modifier) {
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(16.dp),
-                ) {
-                    items(uiState.books) { book ->
-                        BookItem(book = book)
+                if (uiState.books.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "No books to display",
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(16.dp),
+                    ) {
+                        items(uiState.books) { book ->
+                            BookItem(book = book)
+                        }
                     }
                 }
             }
@@ -140,8 +156,40 @@ private fun BookItem(
 
 @Preview
 @Composable
-private fun BookScreenPreview() {
+private fun BookScreenDataPreview() {
     GoTPreview {
-        BooksScreen(modifier = Modifier.fillMaxSize())
+        BooksScreen(
+            viewModel = BooksViewModel(BooksUseCasePreview()),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BookScreenLoadingPreview() {
+    GoTPreview {
+        BooksScreen(
+            viewModel = BooksViewModel(BooksUseCasePreview(PreviewState.LOADING)),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BookScreenErrorPreview() {
+    GoTPreview {
+        BooksScreen(
+            viewModel = BooksViewModel(BooksUseCasePreview(PreviewState.ERROR)),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BookScreenEmptyPreview() {
+    GoTPreview {
+        BooksScreen(
+            viewModel = BooksViewModel(BooksUseCasePreview(PreviewState.EMPTY)),
+        )
     }
 }

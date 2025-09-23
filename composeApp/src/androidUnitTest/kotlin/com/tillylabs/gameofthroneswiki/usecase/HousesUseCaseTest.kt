@@ -9,9 +9,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class GetHousesUseCaseTest {
+class HousesUseCaseTest {
     private val mockRepository = mockk<GameOfThronesRepository>()
-    private val useCase = HousesUseCase(mockRepository)
+    private val useCase = HousesUseCaseImpl(mockRepository)
 
     @Test
     fun `invoke should return houses from repository`() =

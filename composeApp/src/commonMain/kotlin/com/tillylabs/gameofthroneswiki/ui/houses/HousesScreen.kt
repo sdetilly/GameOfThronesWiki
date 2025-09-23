@@ -21,12 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
+import com.tillylabs.gameofthroneswiki.usecase.HousesUseCasePreview
+import com.tillylabs.gameofthroneswiki.usecase.PreviewState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun HousesScreen(modifier: Modifier = Modifier) {
-    val viewModel: HousesViewModel = koinViewModel()
+fun HousesScreen(
+    modifier: Modifier = Modifier,
+    viewModel: HousesViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -61,42 +65,54 @@ fun HousesScreen(modifier: Modifier = Modifier) {
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding =
-                        androidx.compose.foundation.layout
-                            .PaddingValues(16.dp),
-                ) {
-                    items(uiState.houses) { house ->
-                        HouseItem(house = house)
+                if (uiState.houses.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "No houses to display",
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding =
+                            androidx.compose.foundation.layout
+                                .PaddingValues(16.dp),
+                    ) {
+                        items(uiState.houses) { house ->
+                            HouseItem(house = house)
+                        }
 
-                    if (uiState.hasMoreData) {
-                        item {
-                            if (uiState.isLoadingMore) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            } else {
-                                // Trigger load more when this item becomes visible
-                                androidx.compose.runtime.LaunchedEffect(Unit) {
-                                    viewModel.loadMoreHouses()
-                                }
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator()
+                        if (uiState.hasMoreData) {
+                            item {
+                                if (uiState.isLoadingMore) {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                } else {
+                                    // Trigger load more when this item becomes visible
+                                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                                        viewModel.loadMoreHouses()
+                                    }
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
                                 }
                             }
                         }
@@ -135,8 +151,40 @@ private fun HouseItem(
 
 @Preview
 @Composable
-private fun HousesScreenPreview() {
+private fun HousesScreenDataPreview() {
     GoTPreview {
-        HousesScreen(modifier = Modifier.fillMaxSize())
+        HousesScreen(
+            viewModel = HousesViewModel(HousesUseCasePreview()),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HousesScreenLoadingPreview() {
+    GoTPreview {
+        HousesScreen(
+            viewModel = HousesViewModel(HousesUseCasePreview(PreviewState.LOADING)),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HousesScreenErrorPreview() {
+    GoTPreview {
+        HousesScreen(
+            viewModel = HousesViewModel(HousesUseCasePreview(PreviewState.ERROR)),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HousesScreenEmptyPreview() {
+    GoTPreview {
+        HousesScreen(
+            viewModel = HousesViewModel(HousesUseCasePreview(PreviewState.EMPTY)),
+        )
     }
 }

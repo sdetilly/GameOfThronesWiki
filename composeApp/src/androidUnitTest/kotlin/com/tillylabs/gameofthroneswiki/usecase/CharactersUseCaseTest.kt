@@ -9,9 +9,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class GetCharactersUseCaseTest {
+class CharactersUseCaseTest {
     private val mockRepository = mockk<GameOfThronesRepository>()
-    private val useCase = CharactersUseCase(mockRepository)
+    private val useCase = CharactersUseCaseImpl(mockRepository)
 
     @Test
     fun `invoke should return characters from repository`() =

@@ -21,12 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
+import com.tillylabs.gameofthroneswiki.usecase.CharactersUseCasePreview
+import com.tillylabs.gameofthroneswiki.usecase.PreviewState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun CharactersScreen(modifier: Modifier = Modifier) {
-    val viewModel: CharactersViewModel = koinViewModel()
+fun CharactersScreen(
+    modifier: Modifier = Modifier,
+    viewModel: CharactersViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -61,42 +65,54 @@ fun CharactersScreen(modifier: Modifier = Modifier) {
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding =
-                        androidx.compose.foundation.layout
-                            .PaddingValues(16.dp),
-                ) {
-                    items(uiState.characters) { character ->
-                        CharacterItem(character = character)
+                if (uiState.characters.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "No characters to display",
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding =
+                            androidx.compose.foundation.layout
+                                .PaddingValues(16.dp),
+                    ) {
+                        items(uiState.characters) { character ->
+                            CharacterItem(character = character)
+                        }
 
-                    if (uiState.hasMoreData) {
-                        item {
-                            if (uiState.isLoadingMore) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            } else {
-                                // Trigger load more when this item becomes visible
-                                androidx.compose.runtime.LaunchedEffect(Unit) {
-                                    viewModel.loadMoreCharacters()
-                                }
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator()
+                        if (uiState.hasMoreData) {
+                            item {
+                                if (uiState.isLoadingMore) {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                } else {
+                                    // Trigger load more when this item becomes visible
+                                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                                        viewModel.loadMoreCharacters()
+                                    }
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
                                 }
                             }
                         }
@@ -138,8 +154,40 @@ private fun CharacterItem(
 
 @Preview
 @Composable
-private fun CharactersScreenPreview() {
+private fun CharactersScreenDataPreview() {
     GoTPreview {
-        CharactersScreen(modifier = Modifier.fillMaxSize())
+        CharactersScreen(
+            viewModel = CharactersViewModel(CharactersUseCasePreview()),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CharactersScreenLoadingPreview() {
+    GoTPreview {
+        CharactersScreen(
+            viewModel = CharactersViewModel(CharactersUseCasePreview(PreviewState.LOADING)),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CharactersScreenErrorPreview() {
+    GoTPreview {
+        CharactersScreen(
+            viewModel = CharactersViewModel(CharactersUseCasePreview(PreviewState.ERROR)),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CharactersScreenEmptyPreview() {
+    GoTPreview {
+        CharactersScreen(
+            viewModel = CharactersViewModel(CharactersUseCasePreview(PreviewState.EMPTY)),
+        )
     }
 }

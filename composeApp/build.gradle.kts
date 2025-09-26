@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -109,6 +110,10 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            enableAndroidTestCoverage = true
+            enableUnitTestCoverage = true
+        }
         getByName("release") {
             isMinifyEnabled = false
         }

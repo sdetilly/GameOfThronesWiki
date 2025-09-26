@@ -8,11 +8,10 @@ import com.tillylabs.gameofthroneswiki.database.entities.BookEntity
 import com.tillylabs.gameofthroneswiki.database.entities.CharacterEntity
 import com.tillylabs.gameofthroneswiki.database.entities.HouseEntity
 import com.tillylabs.gameofthroneswiki.database.entities.toCharacter
+import com.tillylabs.gameofthroneswiki.database.entities.toHouse
 import com.tillylabs.gameofthroneswiki.http.GameOfThronesHttp
 import com.tillylabs.gameofthroneswiki.models.Book
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
-import com.tillylabs.gameofthroneswiki.models.House
-import com.tillylabs.gameofthroneswiki.testutils.createCharacter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -81,7 +80,7 @@ class GameOfThronesRepositoryTest {
             // Mock an old timestamp to trigger API refresh
             coEvery { mockBookDao.getLastUpdatedTimestamp() } returns System.currentTimeMillis() - 120000 // 2 minutes ago
 
-            coEvery { mockHttpClient.fetchBooks(0) } returns listOf(book)
+            coEvery { mockHttpClient.fetchBooks() } returns listOf(book)
             coEvery { mockBookDao.insertBooks(any()) } returns Unit
             coEvery { mockHttpClient.fetchBookCover(book.isbn) } returns expectedCoverUrl
 
@@ -113,116 +112,15 @@ class GameOfThronesRepositoryTest {
             delay(100)
 
             // Verify API was called in background
-            coVerify(exactly = 1) { mockHttpClient.fetchBooks(0) }
+            coVerify(exactly = 1) { mockHttpClient.fetchBooks() }
             coVerify(exactly = 1) { mockHttpClient.fetchBookCover(book.isbn) }
-        }
-
-    @Test
-    fun `getCharacters should return from database first then refresh from API`() =
-        runTest {
-            // Given
-            val expectedCharacter =
-                createCharacter(
-                    url = "https://anapioficeandfire.com/api/characters/1",
-                    name = "Jon Snow",
-                    culture = "Northmen",
-                    titles = listOf("Lord Commander of the Night's Watch"),
-                    aliases = listOf("Lord Snow"),
-                )
-            val characterEntity =
-                CharacterEntity(
-                    url = expectedCharacter.url,
-                    name = expectedCharacter.name,
-                    gender = expectedCharacter.gender,
-                    culture = expectedCharacter.culture,
-                    born = expectedCharacter.born,
-                    died = expectedCharacter.died,
-                    titles = expectedCharacter.titles,
-                    aliases = expectedCharacter.aliases,
-                    father = expectedCharacter.father,
-                    mother = expectedCharacter.mother,
-                    spouse = expectedCharacter.spouse,
-                    allegiances = expectedCharacter.allegiances,
-                    books = expectedCharacter.books,
-                    povBooks = expectedCharacter.povBooks,
-                    tvSeries = expectedCharacter.tvSeries,
-                    playedBy = expectedCharacter.playedBy,
-                    imageUrl = null,
-                )
-
-            // Database returns cached character
-            coEvery { mockCharacterDao.getCharactersPaginated(50, 0) } returns listOf(characterEntity)
-            coEvery { mockHttpClient.fetchCharacters(1) } returns listOf(expectedCharacter)
-            coEvery { mockCharacterDao.insertCharacters(any()) } returns Unit
-
-            // When
-            val result = repository.getCharacters()
-
-            // Then
-            assertEquals(listOf(expectedCharacter), result)
-            coVerify { mockCharacterDao.getCharactersPaginated(50, 0) }
-        }
-
-    @Test
-    fun `getHouses should return from database first then refresh from API`() =
-        runTest {
-            // Given
-            val expectedHouse =
-                House(
-                    url = "https://anapioficeandfire.com/api/houses/1",
-                    name = "House Stark",
-                    region = "The North",
-                    coatOfArms = "A grey direwolf",
-                    words = "Winter is Coming",
-                    titles = listOf("King in the North"),
-                    seats = listOf("Winterfell"),
-                    currentLord = "",
-                    heir = "",
-                    overlord = "",
-                    founded = "",
-                    founder = "",
-                    diedOut = "",
-                    ancestralWeapons = listOf("Ice"),
-                    cadetBranches = emptyList(),
-                    swornMembers = emptyList(),
-                )
-            val houseEntity =
-                HouseEntity(
-                    url = expectedHouse.url,
-                    name = expectedHouse.name,
-                    region = expectedHouse.region,
-                    coatOfArms = expectedHouse.coatOfArms,
-                    words = expectedHouse.words,
-                    titles = expectedHouse.titles,
-                    seats = expectedHouse.seats,
-                    currentLord = expectedHouse.currentLord,
-                    heir = expectedHouse.heir,
-                    overlord = expectedHouse.overlord,
-                    founded = expectedHouse.founded,
-                    founder = expectedHouse.founder,
-                    diedOut = expectedHouse.diedOut,
-                    ancestralWeapons = expectedHouse.ancestralWeapons,
-                    cadetBranches = expectedHouse.cadetBranches,
-                    swornMembers = expectedHouse.swornMembers,
-                )
-
-            // Database returns cached house
-            coEvery { mockHouseDao.getHousesPaginated(50, 0) } returns listOf(houseEntity)
-            coEvery { mockHttpClient.fetchHouses(1) } returns listOf(expectedHouse)
-            coEvery { mockHouseDao.insertHouses(any()) } returns Unit
-
-            // When
-            val result = repository.getHouses()
-
-            // Then
-            assertEquals(listOf(expectedHouse), result)
-            coVerify { mockHouseDao.getHousesPaginated(50, 0) }
         }
 
     @Test
     fun `clearCache should clear database and in-memory cache`() =
         runTest {
             // Given
+            coEvery { mockBookDao.deleteAllBooks() } returns Unit
             coEvery { mockCharacterDao.deleteAllCharacters() } returns Unit
             coEvery { mockHouseDao.deleteAllHouses() } returns Unit
 
@@ -230,63 +128,13 @@ class GameOfThronesRepositoryTest {
             repository.clearCache()
 
             // Then
+            coVerify { mockBookDao.deleteAllBooks() }
             coVerify { mockCharacterDao.deleteAllCharacters() }
             coVerify { mockHouseDao.deleteAllHouses() }
         }
 
     @Test
-    fun `getCharacters should fetch from API when database is empty`() =
-        runTest {
-            // Given
-            val expectedCharacter =
-                createCharacter(
-                    url = "https://anapioficeandfire.com/api/characters/1",
-                    name = "Jon Snow",
-                    culture = "Northmen",
-                    titles = listOf("Lord Commander of the Night's Watch"),
-                    aliases = listOf("Lord Snow"),
-                )
-
-            // Database is empty initially, then returns the character after API call
-            coEvery { mockCharacterDao.getCharactersPaginated(50, 0) } returnsMany
-                listOf(
-                    emptyList(), // First call - empty database
-                    listOf(
-                        CharacterEntity(
-                            url = expectedCharacter.url,
-                            name = expectedCharacter.name,
-                            gender = expectedCharacter.gender,
-                            culture = expectedCharacter.culture,
-                            born = expectedCharacter.born,
-                            died = expectedCharacter.died,
-                            titles = expectedCharacter.titles,
-                            aliases = expectedCharacter.aliases,
-                            father = expectedCharacter.father,
-                            mother = expectedCharacter.mother,
-                            spouse = expectedCharacter.spouse,
-                            allegiances = expectedCharacter.allegiances,
-                            books = expectedCharacter.books,
-                            povBooks = expectedCharacter.povBooks,
-                            tvSeries = expectedCharacter.tvSeries,
-                            playedBy = expectedCharacter.playedBy,
-                            imageUrl = null,
-                        ),
-                    ), // Second call - after API data is saved
-                )
-            coEvery { mockHttpClient.fetchCharacters(1) } returns listOf(expectedCharacter)
-            coEvery { mockCharacterDao.insertCharacters(any()) } returns Unit
-
-            // When
-            val result = repository.getCharacters()
-
-            // Then
-            assertEquals(listOf(expectedCharacter), result)
-            coVerify { mockHttpClient.fetchCharacters(1) }
-            coVerify { mockCharacterDao.insertCharacters(any()) }
-        }
-
-    @Test
-    fun `getCharactersFlow should return Flow from database`() =
+    fun `getCharacters should return Flow from database`() =
         runTest {
             // Given
             val characterEntity =
@@ -310,12 +158,13 @@ class GameOfThronesRepositoryTest {
                     imageUrl = null,
                 )
 
+            coEvery { mockCharacterDao.getCharactersCount() } returns 0
             every { mockCharacterDao.getAllCharacters() } returns flowOf(listOf(characterEntity))
             coEvery { mockHttpClient.fetchCharacters(1) } returns listOf(characterEntity.toCharacter())
             coEvery { mockCharacterDao.insertCharacters(any()) } returns Unit
 
             // When
-            val flow = repository.getCharactersFlow()
+            val flow = repository.getCharacters()
 
             // Then
             flow.collect { characters ->
@@ -333,7 +182,7 @@ class GameOfThronesRepositoryTest {
             // Mock an old timestamp to trigger API refresh
             coEvery { mockBookDao.getLastUpdatedTimestamp() } returns System.currentTimeMillis() - 120000 // 2 minutes ago
 
-            coEvery { mockHttpClient.fetchBooks(0) } throws expectedException
+            coEvery { mockHttpClient.fetchBooks() } throws expectedException
 
             // Mock the database flow to return empty list (no cached data)
             every { mockBookDao.getAllBooks() } returns flowOf(emptyList())
@@ -348,7 +197,7 @@ class GameOfThronesRepositoryTest {
             delay(100)
 
             // Verify API was called and failed, but flow continued
-            coVerify(exactly = 1) { mockHttpClient.fetchBooks(0) }
+            coVerify(exactly = 1) { mockHttpClient.fetchBooks() }
         }
 
     @Test
@@ -388,7 +237,7 @@ class GameOfThronesRepositoryTest {
             // Mock an old timestamp to trigger API refresh
             coEvery { mockBookDao.getLastUpdatedTimestamp() } returns System.currentTimeMillis() - 120000 // 2 minutes ago
 
-            coEvery { mockHttpClient.fetchBooks(0) } returns listOf(bookWithoutIsbn)
+            coEvery { mockHttpClient.fetchBooks() } returns listOf(bookWithoutIsbn)
             coEvery { mockBookDao.insertBooks(any()) } returns Unit
 
             // Mock the database flow to return the expected book entity
@@ -419,7 +268,193 @@ class GameOfThronesRepositoryTest {
             delay(100)
 
             // Verify API was called but no cover fetch for empty ISBN
-            coVerify(exactly = 1) { mockHttpClient.fetchBooks(0) }
+            coVerify(exactly = 1) { mockHttpClient.fetchBooks() }
             coVerify(exactly = 0) { mockHttpClient.fetchBookCover(any()) }
+        }
+
+    @Test
+    fun `loadMoreCharacters should return database characters and refresh in background`() =
+        runTest {
+            // Given
+            val characterEntity =
+                CharacterEntity(
+                    url = "https://anapioficeandfire.com/api/characters/1",
+                    name = "Test Character",
+                    gender = "Male",
+                    culture = "Northmen",
+                    born = "283 AC",
+                    died = "",
+                    titles = listOf("Lord"),
+                    aliases = listOf("Test"),
+                    father = "",
+                    mother = "",
+                    spouse = "",
+                    allegiances = listOf("House Test"),
+                    books = emptyList(),
+                    povBooks = emptyList(),
+                    tvSeries = emptyList(),
+                    playedBy = emptyList(),
+                    imageUrl = null,
+                )
+
+            coEvery { mockCharacterDao.getCharactersCount() } returns 0
+            coEvery { mockCharacterDao.getCharactersPaginated(50, 0) } returns listOf(characterEntity)
+            coEvery { mockHttpClient.fetchCharacters(0) } returns listOf(characterEntity.toCharacter())
+            coEvery { mockCharacterDao.insertCharacters(any()) } returns Unit
+
+            // When
+            val result = repository.loadMoreCharacters()
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals("Test Character", result[0].name)
+
+            // Give background coroutine time to complete
+            delay(100)
+
+            // Verify API was called in background at least once
+            coVerify(atLeast = 1) { mockHttpClient.fetchCharacters(0) }
+        }
+
+    @Test
+    fun `loadMoreHouses should return database houses and refresh in background`() =
+        runTest {
+            // Given
+            val houseEntity =
+                HouseEntity(
+                    url = "https://anapioficeandfire.com/api/houses/1",
+                    name = "Test House",
+                    region = "North",
+                    coatOfArms = "A test",
+                    words = "Test Words",
+                    titles = listOf("Lord"),
+                    seats = listOf("Test Castle"),
+                    currentLord = "",
+                    heir = "",
+                    overlord = "",
+                    founded = "",
+                    founder = "",
+                    diedOut = "",
+                    ancestralWeapons = emptyList(),
+                    cadetBranches = emptyList(),
+                    swornMembers = emptyList(),
+                )
+
+            coEvery { mockHouseDao.getHousesCount() } returns 0
+            coEvery { mockHouseDao.getHousesPaginated(50, 0) } returns listOf(houseEntity)
+            coEvery { mockHttpClient.fetchHouses(1) } returns listOf(houseEntity.toHouse())
+            coEvery { mockHouseDao.insertHouses(any()) } returns Unit
+
+            // When
+            val result = repository.loadMoreHouses()
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals("Test House", result[0].name)
+
+            // Give background coroutine time to complete
+            delay(100)
+
+            // Verify API was called in background
+            coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
+        }
+
+    @Test
+    fun `refreshCharacters should handle API exceptions gracefully`() =
+        runTest {
+            // Given
+            coEvery { mockHttpClient.fetchCharacters(0) } throws RuntimeException("API Error")
+
+            // When - should not throw exception
+            repository.refreshCharacters()
+
+            // Then
+            coVerify(exactly = 1) { mockHttpClient.fetchCharacters(0) }
+            // No database insertion should happen due to exception
+            coVerify(exactly = 0) { mockCharacterDao.insertCharacters(any()) }
+        }
+
+    @Test
+    fun `refreshHouses should handle API exceptions gracefully`() =
+        runTest {
+            // Given
+            coEvery { mockHttpClient.fetchHouses(1) } throws RuntimeException("API Error")
+
+            // When - should not throw exception
+            repository.refreshHouses()
+
+            // Then
+            coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
+            // No database insertion should happen due to exception
+            coVerify(exactly = 0) { mockHouseDao.insertHouses(any()) }
+        }
+
+    @Test
+    fun `hasMoreCharacters should return true by default`() {
+        // Then
+        assertEquals(true, repository.hasMoreCharacters())
+    }
+
+    @Test
+    fun `hasMoreHouses should return true by default`() {
+        // Then
+        assertEquals(true, repository.hasMoreHouses())
+    }
+
+    @Test
+    fun `clearCache should reset all state and clear database`() =
+        runTest {
+            // Given
+            coEvery { mockBookDao.deleteAllBooks() } returns Unit
+            coEvery { mockCharacterDao.deleteAllCharacters() } returns Unit
+            coEvery { mockHouseDao.deleteAllHouses() } returns Unit
+
+            // When
+            repository.clearCache()
+
+            // Then
+            coVerify { mockBookDao.deleteAllBooks() }
+            coVerify { mockCharacterDao.deleteAllCharacters() }
+            coVerify { mockHouseDao.deleteAllHouses() }
+            // Note: The hasMore methods should return true after clearing cache
+            assertEquals(true, repository.hasMoreCharacters())
+            assertEquals(true, repository.hasMoreHouses())
+        }
+
+    @Test
+    fun `loadMoreCharacters should return empty list when no database results and API fails`() =
+        runTest {
+            // Given
+            coEvery { mockCharacterDao.getCharactersCount() } returns 0
+            coEvery { mockCharacterDao.getCharactersPaginated(50, 0) } returns emptyList()
+            coEvery { mockHttpClient.fetchCharacters(0) } throws RuntimeException("API Error")
+
+            // When
+            val result = repository.loadMoreCharacters()
+
+            // Then - should fallback to immediate API call and return empty list on error
+            assertEquals(emptyList(), result)
+
+            // Give background coroutine time to complete
+            delay(100)
+
+            // Verify API was called at least once (once in background, once immediate)
+            coVerify(atLeast = 1) { mockHttpClient.fetchCharacters(0) }
+        }
+
+    @Test
+    fun `loadMoreHouses should return empty list when no database results and API fails`() =
+        runTest {
+            // Given
+            coEvery { mockHouseDao.getHousesCount() } returns 0
+            coEvery { mockHouseDao.getHousesPaginated(50, 0) } returns emptyList()
+            coEvery { mockHttpClient.fetchHouses(1) } throws RuntimeException("API Error")
+
+            // When
+            val result = repository.loadMoreHouses()
+
+            // Then - should fallback to immediate API call and return empty list on error
+            assertEquals(emptyList(), result)
+            coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
         }
 }

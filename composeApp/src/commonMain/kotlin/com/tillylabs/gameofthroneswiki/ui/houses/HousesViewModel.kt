@@ -22,7 +22,7 @@ class HousesViewModel(
 
     val uiState: StateFlow<HousesUiState> =
         combine(
-            housesUseCase.housesFlow(),
+            housesUseCase.houses(),
             isLoadingMore,
             error,
             hasMoreData,
@@ -48,18 +48,6 @@ class HousesViewModel(
             initialValue = HousesUiState(isLoading = true),
         )
 
-    init {
-        // Initial load to trigger database-first behavior
-        viewModelScope.launch {
-            try {
-                housesUseCase.houses() // This will load from DB first, then refresh from API
-                hasMoreData.value = housesUseCase.hasMore()
-            } catch (e: Exception) {
-                error.value = e.message ?: "Unknown error occurred"
-            }
-        }
-    }
-
     fun loadMoreHouses() {
         if (isLoadingMore.value || !hasMoreData.value) return
 
@@ -68,7 +56,7 @@ class HousesViewModel(
             error.value = null
 
             try {
-                val houses = housesUseCase.loadMore()
+                housesUseCase.loadMore()
                 hasMoreData.value = housesUseCase.hasMore()
                 isLoadingMore.value = false
             } catch (e: Exception) {
@@ -82,7 +70,7 @@ class HousesViewModel(
         error.value = null
         viewModelScope.launch {
             try {
-                housesUseCase.houses()
+                housesUseCase.refreshHouses()
                 hasMoreData.value = housesUseCase.hasMore()
             } catch (e: Exception) {
                 error.value = e.message ?: "Unknown error occurred"

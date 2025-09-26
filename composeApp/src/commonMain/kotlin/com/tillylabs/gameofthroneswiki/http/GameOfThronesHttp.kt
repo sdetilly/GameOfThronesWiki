@@ -33,10 +33,9 @@ class GameOfThronesHttp {
         const val PAGE_SIZE = 50
     }
 
-    suspend fun fetchBooks(page: Int = 1): List<Book> =
+    suspend fun fetchBooks(): List<Book> =
         httpClient
             .get("$BASE_URL/books") {
-                parameter("page", page)
                 parameter("pageSize", PAGE_SIZE)
             }.body()
 

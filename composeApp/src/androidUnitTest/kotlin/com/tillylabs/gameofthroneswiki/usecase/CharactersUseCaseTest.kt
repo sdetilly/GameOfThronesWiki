@@ -4,7 +4,10 @@ import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
 import com.tillylabs.gameofthroneswiki.testutils.createCharacter
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +17,7 @@ class CharactersUseCaseTest {
     private val useCase = CharactersUseCaseImpl(mockRepository)
 
     @Test
-    fun `invoke should return characters from repository`() =
+    fun `characters should return Flow from repository`() =
         runTest {
             // Given
             val expectedCharacters =
@@ -35,50 +38,30 @@ class CharactersUseCaseTest {
                         aliases = listOf("The Imp"),
                     ),
                 )
-            coEvery { mockRepository.getCharacters() } returns expectedCharacters
+            every { mockRepository.getCharacters() } returns flowOf(expectedCharacters)
 
             // When
-            val result = useCase.characters()
+            val result = useCase.characters().first()
 
             // Then
             assertEquals(expectedCharacters, result)
-            coVerify(exactly = 1) { mockRepository.getCharacters() }
         }
 
     @Test
-    fun `invoke should propagate repository exceptions`() =
+    fun `refreshCharacters should call repository refresh`() =
         runTest {
             // Given
-            val expectedException = RuntimeException("Repository error")
-            coEvery { mockRepository.getCharacters() } throws expectedException
-
-            // When & Then
-            try {
-                useCase.characters()
-                throw AssertionError("Should have thrown exception")
-            } catch (e: Exception) {
-                assertEquals(expectedException, e)
-            }
-
-            coVerify(exactly = 1) { mockRepository.getCharacters() }
-        }
-
-    @Test
-    fun `invoke should return empty list when repository returns empty list`() =
-        runTest {
-            // Given
-            coEvery { mockRepository.getCharacters() } returns emptyList()
+            coEvery { mockRepository.refreshCharacters() } returns Unit
 
             // When
-            val result = useCase.characters()
+            useCase.refreshCharacters()
 
             // Then
-            assertEquals(emptyList(), result)
-            coVerify(exactly = 1) { mockRepository.getCharacters() }
+            coVerify(exactly = 1) { mockRepository.refreshCharacters() }
         }
 
     @Test
-    fun `invoke should filter out characters with empty names`() =
+    fun `loadMore should filter out characters with empty names`() =
         runTest {
             // Given
             val charactersFromRepository =
@@ -106,14 +89,27 @@ class CharactersUseCaseTest {
                     ),
                 )
             val expectedCharacters = charactersFromRepository.filter { it.name.isNotEmpty() }
-            coEvery { mockRepository.getCharacters() } returns charactersFromRepository
+            coEvery { mockRepository.loadMoreCharacters() } returns charactersFromRepository
 
             // When
-            val result = useCase.characters()
+            val result = useCase.loadMore()
 
             // Then
             assertEquals(expectedCharacters, result)
             assertEquals(2, result.size)
-            coVerify(exactly = 1) { mockRepository.getCharacters() }
+            coVerify(exactly = 1) { mockRepository.loadMoreCharacters() }
+        }
+
+    @Test
+    fun `hasMore should return repository value`() =
+        runTest {
+            // Given
+            every { mockRepository.hasMoreCharacters() } returns true
+
+            // When
+            val result = useCase.hasMore()
+
+            // Then
+            assertEquals(true, result)
         }
 }

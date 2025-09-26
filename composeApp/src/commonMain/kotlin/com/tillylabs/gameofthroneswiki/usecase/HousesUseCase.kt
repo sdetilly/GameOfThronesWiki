@@ -2,16 +2,13 @@ package com.tillylabs.gameofthroneswiki.usecase
 
 import com.tillylabs.gameofthroneswiki.models.House
 import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Factory
-import kotlin.time.Duration.Companion.days
 
 interface HousesUseCase {
-    fun housesFlow(): Flow<List<House>>
+    fun houses(): Flow<List<House>>
 
-    suspend fun houses(): List<House>
+    suspend fun refreshHouses()
 
     suspend fun loadMore(): List<House>
 
@@ -22,11 +19,14 @@ interface HousesUseCase {
 class HousesUseCaseImpl(
     private val repository: GameOfThronesRepository,
 ) : HousesUseCase {
-    override fun housesFlow(): Flow<List<House>> = repository.getHousesFlow()
+    override fun houses(): Flow<List<House>> = repository.getHouses()
 
-    override suspend fun houses(): List<House> = repository.getHouses()
+    override suspend fun refreshHouses() = repository.refreshHouses()
 
-    override suspend fun loadMore(): List<House> = repository.loadMoreHouses()
+    override suspend fun loadMore(): List<House> =
+        repository
+            .loadMoreHouses()
+            .filter { it.name.isNotEmpty() }
 
     override fun hasMore(): Boolean = repository.hasMoreHouses()
 }
@@ -34,7 +34,7 @@ class HousesUseCaseImpl(
 class HousesUseCasePreview(
     private val previewState: PreviewState = PreviewState.DATA,
 ) : HousesUseCase {
-    override fun housesFlow(): Flow<List<House>> =
+    override fun houses(): Flow<List<House>> =
         kotlinx.coroutines.flow.flowOf(
             when (previewState) {
                 PreviewState.DATA -> getPreviewHouses()
@@ -143,18 +143,7 @@ class HousesUseCasePreview(
             ),
         )
 
-    override suspend fun houses(): List<House> =
-        coroutineScope {
-            when (previewState) {
-                PreviewState.DATA -> getPreviewHouses()
-                PreviewState.EMPTY -> emptyList()
-                PreviewState.LOADING -> {
-                    delay(1.days)
-                    emptyList()
-                }
-                PreviewState.ERROR -> throw Exception("Failed to load characters")
-            }
-        }
+    override suspend fun refreshHouses() = Unit
 
     override suspend fun loadMore(): List<House> = emptyList()
 

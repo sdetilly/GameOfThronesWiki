@@ -15,11 +15,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
 import com.tillylabs.gameofthroneswiki.usecase.CharactersUseCasePreview
 import com.tillylabs.gameofthroneswiki.usecase.PreviewState
@@ -101,7 +103,7 @@ fun CharactersScreen(
                                     }
                                 } else {
                                     // Trigger load more when this item becomes visible
-                                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                                    LaunchedEffect(Unit) {
                                         viewModel.loadMoreCharacters()
                                     }
                                     Box(
@@ -125,7 +127,7 @@ fun CharactersScreen(
 
 @Composable
 private fun CharacterItem(
-    character: com.tillylabs.gameofthroneswiki.models.Character,
+    character: Character,
     modifier: Modifier = Modifier,
 ) {
     Card(

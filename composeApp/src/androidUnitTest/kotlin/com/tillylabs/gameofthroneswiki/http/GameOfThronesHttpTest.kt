@@ -12,7 +12,7 @@ class GameOfThronesHttpTest {
             val client = GameOfThronesHttp()
 
             try {
-                val books = client.fetchBooks(page = 1)
+                val books = client.fetchBooks()
 
                 assertNotNull(books, "Books should not be null")
                 assertTrue(books.isNotEmpty(), "Books list should not be empty")

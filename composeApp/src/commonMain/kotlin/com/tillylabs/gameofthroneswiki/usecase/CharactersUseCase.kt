@@ -2,16 +2,13 @@ package com.tillylabs.gameofthroneswiki.usecase
 
 import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.annotation.Factory
-import kotlin.time.Duration.Companion.days
 
 interface CharactersUseCase {
-    fun charactersFlow(): Flow<List<Character>>
+    fun characters(): Flow<List<Character>>
 
-    suspend fun characters(): List<Character>
+    suspend fun refreshCharacters()
 
     suspend fun loadMore(): List<Character>
 
@@ -22,12 +19,9 @@ interface CharactersUseCase {
 class CharactersUseCaseImpl(
     private val repository: GameOfThronesRepository,
 ) : CharactersUseCase {
-    override fun charactersFlow(): Flow<List<Character>> = repository.getCharactersFlow()
+    override fun characters(): Flow<List<Character>> = repository.getCharacters()
 
-    override suspend fun characters(): List<Character> =
-        repository
-            .getCharacters()
-            .filter { it.name.isNotEmpty() }
+    override suspend fun refreshCharacters() = repository.refreshCharacters()
 
     override suspend fun loadMore(): List<Character> =
         repository
@@ -40,7 +34,7 @@ class CharactersUseCaseImpl(
 class CharactersUseCasePreview(
     private val previewState: PreviewState = PreviewState.DATA,
 ) : CharactersUseCase {
-    override fun charactersFlow(): Flow<List<Character>> =
+    override fun characters(): Flow<List<Character>> =
         kotlinx.coroutines.flow.flowOf(
             when (previewState) {
                 PreviewState.DATA -> getPreviewCharacters()
@@ -206,18 +200,7 @@ class CharactersUseCasePreview(
             ),
         )
 
-    override suspend fun characters(): List<Character> =
-        coroutineScope {
-            when (previewState) {
-                PreviewState.DATA -> getPreviewCharacters()
-                PreviewState.EMPTY -> emptyList()
-                PreviewState.LOADING -> {
-                    delay(1.days)
-                    emptyList()
-                }
-                PreviewState.ERROR -> throw Exception("Failed to load characters")
-            }
-        }
+    override suspend fun refreshCharacters() = Unit
 
     override suspend fun loadMore(): List<Character> = emptyList()
 

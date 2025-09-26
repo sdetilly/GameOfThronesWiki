@@ -60,7 +60,7 @@ class GameOfThronesRepository(
     }
 
     private suspend fun loadMoreBooks() {
-        val books = httpClient.fetchBooks(page = booksCurrentPage)
+        val books = httpClient.fetchBooks()
 
         val booksWithCovers =
             coroutineScope {
@@ -80,7 +80,7 @@ class GameOfThronesRepository(
         database.bookDao().insertBooks(booksWithCovers.map { it.toBookEntity() })
     }
 
-    fun getCharactersFlow(): Flow<List<Character>> {
+    fun getCharacters(): Flow<List<Character>> {
         repositoryScope.launch {
             refreshCharactersFromApi()
         }
@@ -91,58 +91,56 @@ class GameOfThronesRepository(
             .map { entities -> entities.map { it.toCharacter() } }
     }
 
-    suspend fun getCharacters(): List<Character> {
+    suspend fun loadMoreCharacters(): List<Character> {
+        val currentCount = database.characterDao().getCharactersCount()
+
         val dbCharacters =
             database
                 .characterDao()
-                .getCharactersPaginated(50, 0)
+                .getCharactersPaginated(50, currentCount)
                 .map { it.toCharacter() }
-
-        if (dbCharacters.isEmpty()) {
-            refreshCharactersFromApi()
-            return database
-                .characterDao()
-                .getCharactersPaginated(50, 0)
-                .map { it.toCharacter() }
-        }
 
         repositoryScope.launch {
-            refreshCharactersFromApi()
+            if (hasMoreCharacters) {
+                try {
+                    refreshCharactersFromApi()
+                } catch (e: Exception) {
+                    println("Error loading more characters: ${e.message}")
+                }
+            }
         }
 
-        return dbCharacters
+        if (dbCharacters.isNotEmpty()) {
+            return dbCharacters
+        }
+
+        if (hasMoreCharacters) {
+            try {
+                refreshCharactersFromApi()
+                return database
+                    .characterDao()
+                    .getCharactersPaginated(50, currentCount)
+                    .map { it.toCharacter() }
+            } catch (e: Exception) {
+                println("Error loading more characters: ${e.message}")
+                return emptyList()
+            }
+        }
+
+        return emptyList()
     }
 
-    suspend fun loadMoreCharacters(): List<Character> {
-        val currentCount = database.characterDao().getCharactersCount()
-        val newCharacters =
-            database
-                .characterDao()
-                .getCharactersPaginated(50, currentCount)
-                .map { it.toCharacter() }
-
-        if (newCharacters.size < 50 && hasMoreCharacters) {
+    suspend fun refreshCharacters() {
+        try {
             refreshCharactersFromApi()
-            return database
-                .characterDao()
-                .getCharactersPaginated(50, currentCount)
-                .map { it.toCharacter() }
+        } catch (e: Exception) {
+            println("Error refreshing characters: ${e.message}")
         }
-
-        return newCharacters
     }
 
     private suspend fun refreshCharactersFromApi() {
-        if (!hasMoreCharacters) return
-
         try {
-            charactersCurrentPage++
             val apiCharacters = httpClient.fetchCharacters(page = charactersCurrentPage)
-
-            if (apiCharacters.isEmpty()) {
-                hasMoreCharacters = false
-                return
-            }
 
             val entities =
                 apiCharacters
@@ -155,7 +153,7 @@ class GameOfThronesRepository(
         }
     }
 
-    fun getHousesFlow(): Flow<List<House>> {
+    fun getHouses(): Flow<List<House>> {
         repositoryScope.launch {
             refreshHousesFromApi()
         }
@@ -166,45 +164,51 @@ class GameOfThronesRepository(
             .map { entities -> entities.map { it.toHouse() } }
     }
 
-    suspend fun getHouses(): List<House> {
+    suspend fun loadMoreHouses(): List<House> {
+        val currentCount = database.houseDao().getHousesCount()
+
         val dbHouses =
             database
                 .houseDao()
-                .getHousesPaginated(50, 0)
+                .getHousesPaginated(50, currentCount)
                 .map { it.toHouse() }
-
-        if (dbHouses.isEmpty()) {
-            refreshHousesFromApi()
-            return database
-                .houseDao()
-                .getHousesPaginated(50, 0)
-                .map { it.toHouse() }
-        }
 
         repositoryScope.launch {
-            refreshHousesFromApi()
+            if (hasMoreHouses) {
+                try {
+                    refreshHousesFromApi()
+                } catch (e: Exception) {
+                    println("Error loading more houses: ${e.message}")
+                }
+            }
         }
 
-        return dbHouses
+        if (dbHouses.isNotEmpty()) {
+            return dbHouses
+        }
+
+        if (hasMoreHouses) {
+            try {
+                refreshHousesFromApi()
+                return database
+                    .houseDao()
+                    .getHousesPaginated(50, currentCount)
+                    .map { it.toHouse() }
+            } catch (e: Exception) {
+                println("Error loading more houses: ${e.message}")
+                return emptyList()
+            }
+        }
+
+        return emptyList()
     }
 
-    suspend fun loadMoreHouses(): List<House> {
-        val currentCount = database.houseDao().getHousesCount()
-        val newHouses =
-            database
-                .houseDao()
-                .getHousesPaginated(50, currentCount)
-                .map { it.toHouse() }
-
-        if (newHouses.size < 50 && hasMoreHouses) {
+    suspend fun refreshHouses() {
+        try {
             refreshHousesFromApi()
-            return database
-                .houseDao()
-                .getHousesPaginated(50, currentCount)
-                .map { it.toHouse() }
+        } catch (e: Exception) {
+            println("Error refreshing houses: ${e.message}")
         }
-
-        return newHouses
     }
 
     private suspend fun refreshHousesFromApi() {
@@ -238,6 +242,7 @@ class GameOfThronesRepository(
         hasMoreCharacters = true
         hasMoreHouses = true
 
+        database.bookDao().deleteAllBooks()
         database.characterDao().deleteAllCharacters()
         database.houseDao().deleteAllHouses()
     }

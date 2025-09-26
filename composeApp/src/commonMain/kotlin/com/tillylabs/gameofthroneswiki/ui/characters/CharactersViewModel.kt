@@ -23,7 +23,7 @@ class CharactersViewModel(
 
     val uiState: StateFlow<CharactersUiState> =
         combine(
-            charactersUseCase.charactersFlow(),
+            charactersUseCase.characters(),
             isLoadingMore,
             error,
             hasMoreData,
@@ -49,17 +49,6 @@ class CharactersViewModel(
             initialValue = CharactersUiState(isLoading = true),
         )
 
-    init {
-        viewModelScope.launch {
-            try {
-                charactersUseCase.characters()
-                hasMoreData.value = charactersUseCase.hasMore()
-            } catch (e: Exception) {
-                error.value = e.message ?: "Unknown error occurred"
-            }
-        }
-    }
-
     fun loadMoreCharacters() {
         if (isLoadingMore.value || !hasMoreData.value) return
 
@@ -82,7 +71,7 @@ class CharactersViewModel(
         error.value = null
         viewModelScope.launch {
             try {
-                charactersUseCase.characters()
+                charactersUseCase.refreshCharacters()
                 hasMoreData.value = charactersUseCase.hasMore()
             } catch (e: Exception) {
                 error.value = e.message ?: "Unknown error occurred"

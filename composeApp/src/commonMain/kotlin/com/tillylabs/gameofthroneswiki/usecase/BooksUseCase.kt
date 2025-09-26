@@ -2,29 +2,30 @@ package com.tillylabs.gameofthroneswiki.usecase
 
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import org.koin.core.annotation.Factory
-import kotlin.time.Duration.Companion.days
 
 interface BooksUseCase {
-    suspend fun booksWithCover(): List<BookWithCover>
+    fun booksWithCover(): Flow<List<BookWithCover>>
 }
 
 @Factory
 class BooksUseCaseImpl(
     private val repository: GameOfThronesRepository,
 ) : BooksUseCase {
-    override suspend fun booksWithCover(): List<BookWithCover> = repository.getBooks()
+    override fun booksWithCover(): Flow<List<BookWithCover>> = repository.getBooks().onEach { println("SDET: Got some books!") }
 }
 
 class BooksUseCasePreview(
     private val previewState: PreviewState = PreviewState.DATA,
 ) : BooksUseCase {
-    override suspend fun booksWithCover(): List<BookWithCover> =
-        coroutineScope {
-            when (previewState) {
-                PreviewState.DATA ->
+    override fun booksWithCover(): Flow<List<BookWithCover>> =
+        when (previewState) {
+            PreviewState.DATA ->
+                flowOf(
                     listOf(
                         BookWithCover(
                             url = "a",
@@ -68,13 +69,10 @@ class BooksUseCasePreview(
                             povCharacters = listOf("Greyjoy", "Arya Stark", "Ned Stark"),
                             coverImageUrl = "https://covers.openlibrary.org/b/isbn/9780553106633-L.jpg",
                         ),
-                    )
-                PreviewState.EMPTY -> emptyList()
-                PreviewState.LOADING -> {
-                    delay(1.days)
-                    emptyList()
-                }
-                PreviewState.ERROR -> throw Exception("Failed to load books")
-            }
+                    ),
+                )
+            PreviewState.EMPTY -> flowOf(emptyList())
+            PreviewState.LOADING -> emptyFlow()
+            PreviewState.ERROR -> throw Exception("Failed to load books")
         }
 }

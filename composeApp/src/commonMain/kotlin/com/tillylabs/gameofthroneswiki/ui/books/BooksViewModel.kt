@@ -7,7 +7,9 @@ import com.tillylabs.gameofthroneswiki.usecase.BooksUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
@@ -22,24 +24,23 @@ class BooksViewModel(
     }
 
     private fun loadBooks() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                val books = booksUseCase.booksWithCover()
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        booksUseCase
+            .booksWithCover()
+            .onEach { bookWithCovers ->
                 _uiState.value =
                     _uiState.value.copy(
-                        books = books,
+                        books = bookWithCovers,
                         isLoading = false,
                         error = null,
                     )
-            } catch (e: Exception) {
+            }.catch {
                 _uiState.value =
                     _uiState.value.copy(
                         isLoading = false,
-                        error = e.message ?: "Unknown error occurred",
+                        error = it.message ?: "Unknown error occurred",
                     )
-            }
-        }
+            }.launchIn(viewModelScope)
     }
 
     fun retry() {

@@ -10,10 +10,12 @@ import org.koin.ksp.generated.module
 @Composable
 fun App() {
     KoinApplication(application = {
-        modules(AppModule().module)
+        modules(AppModule().module, getPlatformModule())
     }) {
         GameOfThronesTheme {
             MainScreen()
         }
     }
 }
+
+expect fun getPlatformModule(): org.koin.core.module.Module

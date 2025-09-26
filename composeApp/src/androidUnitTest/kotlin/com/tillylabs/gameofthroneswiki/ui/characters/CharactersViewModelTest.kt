@@ -4,9 +4,12 @@ import com.tillylabs.gameofthroneswiki.testutils.createCharacter
 import com.tillylabs.gameofthroneswiki.usecase.CharactersUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -47,6 +50,9 @@ class CharactersViewModelTest {
                         aliases = listOf("Lord Snow"),
                     ),
                 )
+
+            // Mock the Flow and suspend methods
+            every { mockCharactersUseCase.charactersFlow() } returns flowOf(expectedCharacters)
             coEvery { mockCharactersUseCase.characters() } returns expectedCharacters
             coEvery { mockCharactersUseCase.hasMore() } returns false
 
@@ -54,12 +60,12 @@ class CharactersViewModelTest {
             val viewModel = CharactersViewModel(mockCharactersUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then
-            val finalState = viewModel.uiState.value
-            assertFalse(finalState.isLoading)
+            // Then - Wait for StateFlow to emit the expected state
+            val finalState = viewModel.uiState.first { !it.isLoading || it.error != null }
             assertEquals(expectedCharacters, finalState.characters)
             assertNull(finalState.error)
             assertFalse(finalState.hasMoreData)
+            assertFalse(finalState.isLoading)
 
             coVerify(exactly = 1) { mockCharactersUseCase.characters() }
             coVerify(exactly = 1) { mockCharactersUseCase.hasMore() }
@@ -70,17 +76,20 @@ class CharactersViewModelTest {
         runTest(testDispatcher) {
             // Given
             val errorMessage = "API error"
+
+            // Mock Flow with empty list initially
+            every { mockCharactersUseCase.charactersFlow() } returns flowOf(emptyList())
             coEvery { mockCharactersUseCase.characters() } throws RuntimeException(errorMessage)
 
             // When
             val viewModel = CharactersViewModel(mockCharactersUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then
-            val errorState = viewModel.uiState.value
-            assertFalse(errorState.isLoading)
+            // Then - Wait for error state
+            val errorState = viewModel.uiState.first { it.error != null }
             assertEquals(emptyList(), errorState.characters)
             assertEquals(errorMessage, errorState.error)
+            assertFalse(errorState.isLoading)
 
             coVerify(exactly = 1) { mockCharactersUseCase.characters() }
         }
@@ -90,6 +99,9 @@ class CharactersViewModelTest {
         runTest(testDispatcher) {
             // Given
             val characters = listOf(createCharacter(name = "Test Character"))
+
+            // Mock Flow to return the characters
+            every { mockCharactersUseCase.charactersFlow() } returns flowOf(characters)
             coEvery { mockCharactersUseCase.characters() } returns characters
             coEvery { mockCharactersUseCase.hasMore() } returns true
 
@@ -99,11 +111,11 @@ class CharactersViewModelTest {
             viewModel.retry()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then
-            val finalState = viewModel.uiState.value
-            assertFalse(finalState.isLoading)
+            // Then - Wait for characters to be loaded
+            val finalState = viewModel.uiState.first { !it.isLoading || it.error != null }
             assertEquals(characters, finalState.characters)
             assertNull(finalState.error)
+            assertFalse(finalState.isLoading)
 
             coVerify(exactly = 2) { mockCharactersUseCase.characters() }
             coVerify(exactly = 2) { mockCharactersUseCase.hasMore() }

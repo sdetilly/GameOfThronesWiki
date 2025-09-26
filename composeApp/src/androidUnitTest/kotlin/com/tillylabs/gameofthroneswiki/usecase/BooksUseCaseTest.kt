@@ -3,8 +3,9 @@ package com.tillylabs.gameofthroneswiki.usecase
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.repository.GameOfThronesRepository
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,14 +49,13 @@ class BooksUseCaseTest {
                         coverImageUrl = "https://example.com/cok-cover.jpg",
                     ),
                 )
-            coEvery { mockRepository.getBooks() } returns expectedBooks
+            coEvery { mockRepository.getBooks() } returns flowOf(expectedBooks)
 
             // When
             val result = useCase.booksWithCover()
 
             // Then
-            assertEquals(expectedBooks, result)
-            coVerify(exactly = 1) { mockRepository.getBooks() }
+            assertEquals(expectedBooks, result.first())
         }
 
     @Test
@@ -67,26 +67,23 @@ class BooksUseCaseTest {
 
             // When & Then
             try {
-                useCase.booksWithCover()
+                useCase.booksWithCover().first()
                 throw AssertionError("Should have thrown exception")
             } catch (e: Exception) {
                 assertEquals(expectedException, e)
             }
-
-            coVerify(exactly = 1) { mockRepository.getBooks() }
         }
 
     @Test
     fun `invoke should return empty list when repository returns empty list`() =
         runTest {
             // Given
-            coEvery { mockRepository.getBooks() } returns emptyList()
+            coEvery { mockRepository.getBooks() } returns flowOf(emptyList())
 
             // When
             val result = useCase.booksWithCover()
 
             // Then
-            assertEquals(emptyList(), result)
-            coVerify(exactly = 1) { mockRepository.getBooks() }
+            assertEquals(emptyList(), result.first())
         }
 }

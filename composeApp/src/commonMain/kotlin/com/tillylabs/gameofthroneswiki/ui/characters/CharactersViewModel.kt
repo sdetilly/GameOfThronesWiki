@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.usecase.CharactersUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -14,60 +17,77 @@ import org.koin.android.annotation.KoinViewModel
 class CharactersViewModel(
     private val charactersUseCase: CharactersUseCase,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(CharactersUiState())
-    val uiState: StateFlow<CharactersUiState> = _uiState.asStateFlow()
+    private val isLoadingMore = MutableStateFlow(false)
+    private val error = MutableStateFlow<String?>(null)
+    private val hasMoreData = MutableStateFlow(true)
+
+    val uiState: StateFlow<CharactersUiState> =
+        combine(
+            charactersUseCase.charactersFlow(),
+            isLoadingMore,
+            error,
+            hasMoreData,
+        ) { characters, isLoadingMore, error, hasMoreData ->
+            CharactersUiState(
+                characters = characters,
+                isLoading = characters.isEmpty() && error == null,
+                isLoadingMore = isLoadingMore,
+                error = error,
+                hasMoreData = hasMoreData,
+            )
+        }.catch { throwable ->
+            emit(
+                CharactersUiState(
+                    error = throwable.message ?: "Unknown error occurred",
+                ),
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started =
+                SharingStarted
+                    .WhileSubscribed(5000),
+            initialValue = CharactersUiState(isLoading = true),
+        )
 
     init {
-        loadCharacters()
-    }
-
-    private fun loadCharacters() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val characters = charactersUseCase.characters()
-                _uiState.value =
-                    _uiState.value.copy(
-                        characters = characters,
-                        isLoading = false,
-                        error = null,
-                        hasMoreData = charactersUseCase.hasMore(),
-                    )
+                charactersUseCase.characters()
+                hasMoreData.value = charactersUseCase.hasMore()
             } catch (e: Exception) {
-                _uiState.value =
-                    _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message ?: "Unknown error occurred",
-                    )
+                error.value = e.message ?: "Unknown error occurred"
             }
         }
     }
 
     fun loadMoreCharacters() {
-        if (_uiState.value.isLoadingMore || !_uiState.value.hasMoreData) return
+        if (isLoadingMore.value || !hasMoreData.value) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoadingMore = true)
+            isLoadingMore.value = true
+            error.value = null
+
             try {
-                val characters = charactersUseCase.loadMore()
-                _uiState.value =
-                    _uiState.value.copy(
-                        characters = characters,
-                        isLoadingMore = false,
-                        hasMoreData = charactersUseCase.hasMore(),
-                    )
+                charactersUseCase.loadMore()
+                hasMoreData.value = charactersUseCase.hasMore()
+                isLoadingMore.value = false
             } catch (e: Exception) {
-                _uiState.value =
-                    _uiState.value.copy(
-                        isLoadingMore = false,
-                        error = e.message ?: "Unknown error occurred",
-                    )
+                error.value = e.message ?: "Unknown error occurred"
+                isLoadingMore.value = false
             }
         }
     }
 
     fun retry() {
-        loadCharacters()
+        error.value = null
+        viewModelScope.launch {
+            try {
+                charactersUseCase.characters()
+                hasMoreData.value = charactersUseCase.hasMore()
+            } catch (e: Exception) {
+                error.value = e.message ?: "Unknown error occurred"
+            }
+        }
     }
 }
 

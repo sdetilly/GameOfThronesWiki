@@ -6,7 +6,9 @@ import com.tillylabs.gameofthroneswiki.models.House
 import com.tillylabs.gameofthroneswiki.usecase.HousesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
@@ -14,60 +16,78 @@ import org.koin.android.annotation.KoinViewModel
 class HousesViewModel(
     private val housesUseCase: HousesUseCase,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HousesUiState())
-    val uiState: StateFlow<HousesUiState> = _uiState.asStateFlow()
+    private val isLoadingMore = MutableStateFlow(false)
+    private val error = MutableStateFlow<String?>(null)
+    private val hasMoreData = MutableStateFlow(true)
+
+    val uiState: StateFlow<HousesUiState> =
+        combine(
+            housesUseCase.housesFlow(),
+            isLoadingMore,
+            error,
+            hasMoreData,
+        ) { houses, isLoadingMore, error, hasMoreData ->
+            HousesUiState(
+                houses = houses,
+                isLoading = houses.isEmpty() && error == null,
+                isLoadingMore = isLoadingMore,
+                error = error,
+                hasMoreData = hasMoreData,
+            )
+        }.catch { throwable ->
+            emit(
+                HousesUiState(
+                    error = throwable.message ?: "Unknown error occurred",
+                ),
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started =
+                kotlinx.coroutines.flow.SharingStarted
+                    .WhileSubscribed(5000),
+            initialValue = HousesUiState(isLoading = true),
+        )
 
     init {
-        loadHouses()
-    }
-
-    private fun loadHouses() {
+        // Initial load to trigger database-first behavior
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val houses = housesUseCase.houses()
-                _uiState.value =
-                    _uiState.value.copy(
-                        houses = houses,
-                        isLoading = false,
-                        error = null,
-                        hasMoreData = housesUseCase.hasMore(),
-                    )
+                housesUseCase.houses() // This will load from DB first, then refresh from API
+                hasMoreData.value = housesUseCase.hasMore()
             } catch (e: Exception) {
-                _uiState.value =
-                    _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message ?: "Unknown error occurred",
-                    )
+                error.value = e.message ?: "Unknown error occurred"
             }
         }
     }
 
     fun loadMoreHouses() {
-        if (_uiState.value.isLoadingMore || !_uiState.value.hasMoreData) return
+        if (isLoadingMore.value || !hasMoreData.value) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoadingMore = true)
+            isLoadingMore.value = true
+            error.value = null
+
             try {
                 val houses = housesUseCase.loadMore()
-                _uiState.value =
-                    _uiState.value.copy(
-                        houses = houses,
-                        isLoadingMore = false,
-                        hasMoreData = housesUseCase.hasMore(),
-                    )
+                hasMoreData.value = housesUseCase.hasMore()
+                isLoadingMore.value = false
             } catch (e: Exception) {
-                _uiState.value =
-                    _uiState.value.copy(
-                        isLoadingMore = false,
-                        error = e.message ?: "Unknown error occurred",
-                    )
+                error.value = e.message ?: "Unknown error occurred"
+                isLoadingMore.value = false
             }
         }
     }
 
     fun retry() {
-        loadHouses()
+        error.value = null
+        viewModelScope.launch {
+            try {
+                housesUseCase.houses()
+                hasMoreData.value = housesUseCase.hasMore()
+            } catch (e: Exception) {
+                error.value = e.message ?: "Unknown error occurred"
+            }
+        }
     }
 }
 

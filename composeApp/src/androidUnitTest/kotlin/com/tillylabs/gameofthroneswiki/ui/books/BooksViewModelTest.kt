@@ -1,3 +1,5 @@
+@file:Suppress("UnusedFlow")
+
 package com.tillylabs.gameofthroneswiki.ui.books
 
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
@@ -7,6 +9,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -54,7 +58,7 @@ class BooksViewModelTest {
                         coverImageUrl = "https://example.com/cover.jpg",
                     ),
                 )
-            coEvery { mockBooksUseCase.booksWithCover() } returns expectedBooks
+            coEvery { mockBooksUseCase.booksWithCover() } returns flowOf(expectedBooks)
 
             // When
             val viewModel = BooksViewModel(mockBooksUseCase)
@@ -74,7 +78,10 @@ class BooksViewModelTest {
         runTest(testDispatcher) {
             // Given
             val errorMessage = "Network error"
-            coEvery { mockBooksUseCase.booksWithCover() } throws RuntimeException(errorMessage)
+            coEvery { mockBooksUseCase.booksWithCover() } returns
+                flow {
+                    throw RuntimeException(errorMessage)
+                }
 
             // When
             val viewModel = BooksViewModel(mockBooksUseCase)
@@ -94,7 +101,7 @@ class BooksViewModelTest {
         runTest(testDispatcher) {
             // Given
             val books = listOf(mockk<BookWithCover>())
-            coEvery { mockBooksUseCase.booksWithCover() } returns books
+            coEvery { mockBooksUseCase.booksWithCover() } returns flowOf(books)
 
             // When
             val viewModel = BooksViewModel(mockBooksUseCase)
@@ -115,7 +122,7 @@ class BooksViewModelTest {
     fun `should handle empty books list`() =
         runTest(testDispatcher) {
             // Given
-            coEvery { mockBooksUseCase.booksWithCover() } returns emptyList()
+            coEvery { mockBooksUseCase.booksWithCover() } returns flowOf(emptyList())
 
             // When
             val viewModel = BooksViewModel(mockBooksUseCase)
@@ -126,7 +133,6 @@ class BooksViewModelTest {
             assertFalse(finalState.isLoading)
             assertEquals(emptyList(), finalState.books)
             assertNull(finalState.error)
-
             coVerify(exactly = 1) { mockBooksUseCase.booksWithCover() }
         }
 }

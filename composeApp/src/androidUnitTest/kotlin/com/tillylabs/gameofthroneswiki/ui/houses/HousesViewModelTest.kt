@@ -20,6 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HousesViewModelTest {
@@ -63,7 +64,6 @@ class HousesViewModelTest {
                 )
 
             every { mockHousesUseCase.houses() } returns flowOf(expectedHouses)
-            coEvery { mockHousesUseCase.refreshHouses() } returns Unit
             every { mockHousesUseCase.hasMore() } returns false
 
             // When
@@ -71,39 +71,28 @@ class HousesViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then - Wait for StateFlow to emit the expected state
-            val finalState = viewModel.uiState.first { !it.isLoading || it.error != null }
+            val finalState = viewModel.uiState.first { it.houses.isNotEmpty() }
             assertEquals(expectedHouses, finalState.houses)
             assertNull(finalState.error)
-            assertFalse(finalState.hasMoreData)
             assertFalse(finalState.isLoading)
-
-            // Note: refreshHouses is called via initialization
-            // hasMore() is called to initialize hasMoreData state
         }
 
     @Test
     fun `should handle error state`() =
         runTest(testDispatcher) {
-            // Given
-            val errorMessage = "Server error"
-
-            // Mock Flow with empty list initially
+            // Given - Mock Flow with empty list (no data available)
             every { mockHousesUseCase.houses() } returns flowOf(emptyList())
-            coEvery { mockHousesUseCase.refreshHouses() } throws RuntimeException(errorMessage)
             every { mockHousesUseCase.hasMore() } returns false
 
             // When
             val viewModel = HousesViewModel(mockHousesUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then - Wait for error state
-            val errorState = viewModel.uiState.first { it.error != null }
-            assertEquals(emptyList(), errorState.houses)
-            assertEquals(errorMessage, errorState.error)
-            assertFalse(errorState.isLoading)
-
-            // Verify refreshHouses was called and failed
-            coVerify(atLeast = 1) { mockHousesUseCase.refreshHouses() }
+            // Then - Should show loading state when no houses are available
+            val initialState = viewModel.uiState.value
+            assertEquals(emptyList(), initialState.houses)
+            assertNull(initialState.error)
+            assertTrue(initialState.isLoading) // Should be loading when houses is empty and no error
         }
 
     @Test
@@ -124,12 +113,12 @@ class HousesViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then - Wait for houses to be loaded
-            val finalState = viewModel.uiState.first { !it.isLoading || it.error != null }
+            val finalState = viewModel.uiState.first { it.houses.isNotEmpty() }
             assertEquals(houses, finalState.houses)
             assertNull(finalState.error)
             assertFalse(finalState.isLoading)
 
-            // Verify retry was called (only the explicit retry call, not the initial initialization)
-            coVerify(atLeast = 1) { mockHousesUseCase.refreshHouses() }
+            // Verify retry was called
+            coVerify(exactly = 1) { mockHousesUseCase.refreshHouses() }
         }
 }

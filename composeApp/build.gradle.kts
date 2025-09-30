@@ -167,9 +167,41 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
+kover {
+    reports {
+        filters {
+            excludes {
+                packages(
+                    "*.generated.*",
+                    "gameofthroneswiki.composeapp.generated.*",
+                    "org.koin.ksp.generated",
+                    "com.tillylabs.gameofthroneswiki.ui.preview.*",
+                    "com.tillylabs.gameofthroneswiki.ui.theme.*",
+                    "com.tillylabs.gameofthroneswiki.ui.navigation.*",
+                    "com.tillylabs.gameofthroneswiki.database.dao.*",
+                    "*.MainActivityKt*",
+                    "*.App*",
+                    "*.ComposableSingletons*"
+                )
+                classes(
+                    "*\$*",
+                    "*_Impl",
+                    "*_Factory",
+                    "*Database*",
+                    "*Dao_Impl",
+                    "*Activity*",
+                    "*Preview*",
+                    "*Theme*"
+                )
+            }
+        }
+    }
+}
+
 val ctlf: Task by tasks.creating {
     group = "verification"
     description = "Runs all tests and adds automatic lint fixing"
     dependsOn("ktlintFormat")
     dependsOn("testDebugUnitTest")
+    dependsOn("koverHtmlReport")
 }

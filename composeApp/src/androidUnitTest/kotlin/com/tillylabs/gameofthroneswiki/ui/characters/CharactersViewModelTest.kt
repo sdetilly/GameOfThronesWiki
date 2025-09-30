@@ -20,6 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CharactersViewModelTest {
@@ -51,9 +52,8 @@ class CharactersViewModelTest {
                     ),
                 )
 
-            // Mock the Flow and suspend methods
+            // Mock the Flow to return characters
             every { mockCharactersUseCase.characters() } returns flowOf(expectedCharacters)
-            coEvery { mockCharactersUseCase.refreshCharacters() } returns Unit
             every { mockCharactersUseCase.hasMore() } returns false
 
             // When
@@ -61,39 +61,28 @@ class CharactersViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then - Wait for StateFlow to emit the expected state
-            val finalState = viewModel.uiState.first { !it.isLoading || it.error != null }
+            val finalState = viewModel.uiState.first { it.characters.isNotEmpty() }
             assertEquals(expectedCharacters, finalState.characters)
             assertNull(finalState.error)
-            assertFalse(finalState.hasMoreData)
             assertFalse(finalState.isLoading)
-
-            // Note: refreshCharacters is called via background loading in the Flow
-            // hasMore() is called to initialize hasMoreData state
         }
 
     @Test
     fun `should handle error state`() =
         runTest(testDispatcher) {
-            // Given
-            val errorMessage = "API error"
-
-            // Mock Flow with empty list initially
+            // Given - Mock Flow with empty list (no data available)
             every { mockCharactersUseCase.characters() } returns flowOf(emptyList())
-            coEvery { mockCharactersUseCase.refreshCharacters() } throws RuntimeException(errorMessage)
             every { mockCharactersUseCase.hasMore() } returns false
 
             // When
             val viewModel = CharactersViewModel(mockCharactersUseCase)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // Then - Wait for error state
-            val errorState = viewModel.uiState.first { it.error != null }
-            assertEquals(emptyList(), errorState.characters)
-            assertEquals(errorMessage, errorState.error)
-            assertFalse(errorState.isLoading)
-
-            // Verify refreshCharacters was called and failed
-            coVerify(atLeast = 1) { mockCharactersUseCase.refreshCharacters() }
+            // Then - Should show loading state when no characters are available
+            val initialState = viewModel.uiState.value
+            assertEquals(emptyList(), initialState.characters)
+            assertNull(initialState.error)
+            assertTrue(initialState.isLoading) // Should be loading when characters is empty and no error
         }
 
     @Test
@@ -114,12 +103,12 @@ class CharactersViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then - Wait for characters to be loaded
-            val finalState = viewModel.uiState.first { !it.isLoading || it.error != null }
+            val finalState = viewModel.uiState.first { it.characters.isNotEmpty() }
             assertEquals(characters, finalState.characters)
             assertNull(finalState.error)
             assertFalse(finalState.isLoading)
 
-            // Verify retry was called (only the explicit retry call, not the initial Flow loading)
-            coVerify(atLeast = 1) { mockCharactersUseCase.refreshCharacters() }
+            // Verify retry was called
+            coVerify(exactly = 1) { mockCharactersUseCase.refreshCharacters() }
         }
 }

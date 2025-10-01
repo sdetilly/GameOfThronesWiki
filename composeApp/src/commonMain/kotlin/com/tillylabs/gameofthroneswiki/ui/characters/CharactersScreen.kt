@@ -12,7 +12,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,95 +29,143 @@ import com.tillylabs.gameofthroneswiki.models.Character
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
 import com.tillylabs.gameofthroneswiki.usecase.CharactersUseCasePreview
 import com.tillylabs.gameofthroneswiki.usecase.PreviewState
+import gameofthroneswiki.composeapp.generated.resources.Res
+import gameofthroneswiki.composeapp.generated.resources.ic_book
+import gameofthroneswiki.composeapp.generated.resources.ic_castle
+import gameofthroneswiki.composeapp.generated.resources.ic_person
+import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CharactersScreen(
+    onNavigateToBooks: () -> Unit = {},
+    onNavigateToHouses: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: CharactersViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(modifier = modifier.fillMaxSize()) {
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            uiState.error != null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = uiState.error.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onNavigateToBooks,
+                    icon = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_book),
+                            contentDescription = "Books",
                         )
-                        Button(onClick = { viewModel.retry() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
+                    },
+                    label = { Text("Books") },
+                )
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { },
+                    icon = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_person),
+                            contentDescription = "Characters",
+                        )
+                    },
+                    label = { Text("Characters") },
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onNavigateToHouses,
+                    icon = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_castle),
+                            contentDescription = "Houses",
+                        )
+                    },
+                    label = { Text("Houses") },
+                )
             }
-
-            else -> {
-                if (uiState.characters.isEmpty()) {
+        },
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            when {
+                uiState.isLoading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "No characters to display",
-                            color = MaterialTheme.colorScheme.error,
-                        )
+                        CircularProgressIndicator()
                     }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding =
-                            androidx.compose.foundation.layout
-                                .PaddingValues(16.dp),
-                    ) {
-                        items(uiState.characters) { character ->
-                            CharacterItem(character = character)
-                        }
+                }
 
-                        if (uiState.hasMoreData) {
-                            item {
-                                if (uiState.isLoadingMore) {
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                } else {
-                                    // Trigger load more when this item becomes visible
-                                    LaunchedEffect(Unit) {
-                                        viewModel.loadMoreCharacters()
-                                    }
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
+                uiState.error != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = uiState.error.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                            Button(onClick = { viewModel.retry() }) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                }
+
+                else -> {
+                    if (uiState.characters.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "No characters to display",
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding =
+                                androidx.compose.foundation.layout
+                                    .PaddingValues(16.dp),
+                        ) {
+                            items(uiState.characters) { character ->
+                                CharacterItem(character = character)
+                            }
+
+                            if (uiState.hasMoreData) {
+                                item {
+                                    if (uiState.isLoadingMore) {
+                                        Box(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            CircularProgressIndicator()
+                                        }
+                                    } else {
+                                        // Trigger load more when this item becomes visible
+                                        LaunchedEffect(Unit) {
+                                            viewModel.loadMoreCharacters()
+                                        }
+                                        Box(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            CircularProgressIndicator()
+                                        }
                                     }
                                 }
                             }

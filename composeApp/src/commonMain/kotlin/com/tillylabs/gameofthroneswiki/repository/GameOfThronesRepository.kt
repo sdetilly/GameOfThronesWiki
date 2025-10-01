@@ -49,12 +49,20 @@ class GameOfThronesRepository(
             .map { entities -> entities.map { it.toBookWithCover() } }
     }
 
+    suspend fun getBookByUrl(url: String): BookWithCover? = database.bookDao().getBookByUrl(url)?.toBookWithCover()
+
     private suspend fun loadBooksIfNeeded(lastUpdated: Long?) {
-        lastUpdated ?: return
-        if (lastUpdated + 1.minutes.inWholeMilliseconds < getCurrentTimeMillis()) {
+        // Load books if never loaded (lastUpdated is null) or if data is stale
+        val shouldLoad =
+            lastUpdated == null ||
+                lastUpdated + 1.minutes.inWholeMilliseconds < getCurrentTimeMillis()
+
+        if (shouldLoad) {
             try {
                 loadMoreBooks()
             } catch (e: Exception) {
+                println("Error loading books: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

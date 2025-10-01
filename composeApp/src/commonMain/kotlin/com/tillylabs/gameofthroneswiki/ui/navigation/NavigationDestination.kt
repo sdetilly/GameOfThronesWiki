@@ -1,9 +1,17 @@
 package com.tillylabs.gameofthroneswiki.ui.navigation
 
-enum class NavigationDestination(
-    val route: String,
-) {
-    BOOKS("books"),
-    CHARACTERS("characters"),
-    HOUSES("houses"),
-}
+import kotlinx.serialization.Serializable
+
+@Serializable
+object Books
+
+@Serializable
+data class BookDetails(
+    val bookUrl: String,
+)
+
+@Serializable
+object Characters
+
+@Serializable
+object Houses

@@ -46,6 +46,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.navigation.compose)
 
             // Ktor
             implementation(libs.ktor.client.core)
@@ -181,7 +182,7 @@ kover {
                     "com.tillylabs.gameofthroneswiki.database.dao.*",
                     "*.MainActivityKt*",
                     "*.App*",
-                    "*.ComposableSingletons*"
+                    "*.ComposableSingletons*",
                 )
                 classes(
                     "*\$*",
@@ -191,7 +192,7 @@ kover {
                     "*Dao_Impl",
                     "*Activity*",
                     "*Preview*",
-                    "*Theme*"
+                    "*Theme*",
                 )
             }
         }

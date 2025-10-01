@@ -1,81 +1,91 @@
 package com.tillylabs.gameofthroneswiki.ui
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.tillylabs.gameofthroneswiki.ui.books.BookDetailsScreen
 import com.tillylabs.gameofthroneswiki.ui.books.BooksScreen
 import com.tillylabs.gameofthroneswiki.ui.characters.CharactersScreen
 import com.tillylabs.gameofthroneswiki.ui.houses.HousesScreen
-import com.tillylabs.gameofthroneswiki.ui.navigation.NavigationDestination
-import gameofthroneswiki.composeapp.generated.resources.Res
-import gameofthroneswiki.composeapp.generated.resources.ic_book
-import gameofthroneswiki.composeapp.generated.resources.ic_castle
-import gameofthroneswiki.composeapp.generated.resources.ic_person
-import org.jetbrains.compose.resources.vectorResource
+import com.tillylabs.gameofthroneswiki.ui.navigation.BookDetails
+import com.tillylabs.gameofthroneswiki.ui.navigation.Books
+import com.tillylabs.gameofthroneswiki.ui.navigation.Characters
+import com.tillylabs.gameofthroneswiki.ui.navigation.Houses
+import kotlin.reflect.KType
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainScreen() {
-    var selectedTab by remember { mutableStateOf(NavigationDestination.BOOKS) }
+    val navController = rememberNavController()
 
-    val tabs =
-        listOf(
-            TabItem(
-                title = "Books",
-                icon = vectorResource(Res.drawable.ic_book),
-                destination = NavigationDestination.BOOKS,
-            ),
-            TabItem(
-                title = "Characters",
-                icon = vectorResource(Res.drawable.ic_person),
-                destination = NavigationDestination.CHARACTERS,
-            ),
-            TabItem(
-                title = "Houses",
-                icon = vectorResource(Res.drawable.ic_castle),
-                destination = NavigationDestination.HOUSES,
-            ),
-        )
-
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                tabs.forEachIndexed { index, tab ->
-                    NavigationBarItem(
-                        selected = selectedTab == tab.destination,
-                        onClick = { selectedTab = tab.destination },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.title,
-                            )
-                        },
-                        label = { Text(tab.title) },
-                    )
-                }
+    SharedTransitionLayout {
+        NavHost(
+            navController = navController,
+            startDestination = Books,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            bottomTabComposable<Books> {
+                BooksScreen(
+                    onBookClick = { bookUrl ->
+                        navController.navigate(BookDetails(bookUrl))
+                    },
+                    onNavigateToCharacters = { navController.navigate(Characters) },
+                    onNavigateToHouses = { navController.navigate(Houses) },
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@bottomTabComposable,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
-        },
-    ) { paddingValues ->
-        when (selectedTab) {
-            NavigationDestination.BOOKS -> BooksScreen(modifier = Modifier.fillMaxSize().padding(paddingValues))
-            NavigationDestination.CHARACTERS -> CharactersScreen(modifier = Modifier.fillMaxSize().padding(paddingValues))
-            NavigationDestination.HOUSES -> HousesScreen(modifier = Modifier.fillMaxSize().padding(paddingValues))
+
+            composable<BookDetails> { backStackEntry ->
+                val bookDetails = backStackEntry.toRoute<BookDetails>()
+                BookDetailsScreen(
+                    bookUrl = bookDetails.bookUrl,
+                    onNavigateBack = { navController.navigateUp() },
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@composable,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+
+            bottomTabComposable<Characters> {
+                CharactersScreen(
+                    onNavigateToBooks = { navController.navigate(Books) },
+                    onNavigateToHouses = { navController.navigate(Houses) },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+
+            bottomTabComposable<Houses> {
+                HousesScreen(
+                    onNavigateToBooks = { navController.navigate(Books) },
+                    onNavigateToCharacters = { navController.navigate(Characters) },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
 
-private data class TabItem(
-    val title: String,
-    val icon: ImageVector,
-    val destination: NavigationDestination,
-)
+private inline fun <reified T : Any> NavGraphBuilder.bottomTabComposable(
+    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) {
+    composable<T>(
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
+        content = content,
+    )
+}

@@ -49,7 +49,7 @@ jobs:
         run: ./gradlew linkDebugFrameworkIosSimulatorArm64
 
       - name: Add coverage badge to README
-        run: ./gradlew addKoverBadge
+        run: ./gradlew addKoverBadge --no-configuration-cache
 
       - name: Commit coverage badge
         run: |

@@ -193,6 +193,7 @@ kover {
                     "*Activity*",
                     "*Preview*",
                     "*Theme*",
+                    "*ScreenKt",
                 )
             }
         }

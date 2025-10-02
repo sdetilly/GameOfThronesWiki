@@ -22,7 +22,6 @@ import com.tillylabs.gameofthroneswiki.ui.navigation.BookDetails
 import com.tillylabs.gameofthroneswiki.ui.navigation.Books
 import com.tillylabs.gameofthroneswiki.ui.navigation.Characters
 import com.tillylabs.gameofthroneswiki.ui.navigation.Houses
-import kotlin.reflect.KType
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -35,13 +34,26 @@ fun MainScreen() {
             startDestination = Books,
             modifier = Modifier.fillMaxSize(),
         ) {
-            bottomTabComposable<Books> {
+            bottomTabComposable<Books> { backStackEntry ->
                 BooksScreen(
                     onBookClick = { bookUrl ->
                         navController.navigate(BookDetails(bookUrl))
                     },
-                    onNavigateToCharacters = { navController.navigate(Characters) },
-                    onNavigateToHouses = { navController.navigate(Houses) },
+                    onNavigateToCharacters = {
+                        navController.navigate(Characters) {
+                            popUpTo(Books) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToHouses = {
+                        navController.navigate(Houses) {
+                            popUpTo(Books) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    viewModelStoreOwner = backStackEntry,
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedVisibilityScope = this@bottomTabComposable,
                     modifier = Modifier.fillMaxSize(),
@@ -59,18 +71,50 @@ fun MainScreen() {
                 )
             }
 
-            bottomTabComposable<Characters> {
+            bottomTabComposable<Characters> { backStackEntry ->
                 CharactersScreen(
-                    onNavigateToBooks = { navController.navigate(Books) },
-                    onNavigateToHouses = { navController.navigate(Houses) },
+                    onNavigateToBooks = {
+                        navController.navigate(Books) {
+                            popUpTo(Books) {
+                                inclusive = false
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToHouses = {
+                        navController.navigate(Houses) {
+                            popUpTo(Books) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    viewModelStoreOwner = backStackEntry,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
 
-            bottomTabComposable<Houses> {
+            bottomTabComposable<Houses> { backStackEntry ->
                 HousesScreen(
-                    onNavigateToBooks = { navController.navigate(Books) },
-                    onNavigateToCharacters = { navController.navigate(Characters) },
+                    onNavigateToBooks = {
+                        navController.navigate(Books) {
+                            popUpTo(Books) {
+                                inclusive = false
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToCharacters = {
+                        navController.navigate(Characters) {
+                            popUpTo(Books) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    viewModelStoreOwner = backStackEntry,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

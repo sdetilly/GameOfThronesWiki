@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import coil3.compose.AsyncImage
 import com.tillylabs.gameofthroneswiki.models.BookWithCover
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
@@ -54,7 +56,8 @@ fun BooksScreen(
     onNavigateToCharacters: () -> Unit = {},
     onNavigateToHouses: () -> Unit = {},
     modifier: Modifier = Modifier,
-    viewModel: BooksViewModel = koinViewModel(),
+    viewModelStoreOwner: ViewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current),
+    viewModel: BooksViewModel = koinViewModel(viewModelStoreOwner = viewModelStoreOwner),
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {

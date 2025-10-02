@@ -23,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.tillylabs.gameofthroneswiki.ui.preview.GoTPreview
 import com.tillylabs.gameofthroneswiki.usecase.HousesUseCasePreview
 import com.tillylabs.gameofthroneswiki.usecase.PreviewState
@@ -40,7 +42,8 @@ fun HousesScreen(
     onNavigateToBooks: () -> Unit = {},
     onNavigateToCharacters: () -> Unit = {},
     modifier: Modifier = Modifier,
-    viewModel: HousesViewModel = koinViewModel(),
+    viewModelStoreOwner: ViewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current),
+    viewModel: HousesViewModel = koinViewModel(viewModelStoreOwner = viewModelStoreOwner),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

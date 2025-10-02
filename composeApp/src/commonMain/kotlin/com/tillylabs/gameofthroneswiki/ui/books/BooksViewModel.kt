@@ -20,7 +20,6 @@ class BooksViewModel(
     val uiState: StateFlow<BooksUiState> = _uiState.asStateFlow()
 
     init {
-        println("SDET: BooksViewModel initialized")
         loadBooks()
     }
 

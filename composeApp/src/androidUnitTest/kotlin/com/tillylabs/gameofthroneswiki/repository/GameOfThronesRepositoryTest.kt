@@ -16,9 +16,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -109,7 +109,7 @@ class GameOfThronesRepositoryTest {
             assertEquals(expectedBooksWithCover, result1.first())
 
             // Give background coroutine time to complete
-            delay(100)
+            advanceUntilIdle()
 
             // Verify API was called in background
             coVerify(exactly = 1) { mockHttpClient.fetchBooks() }
@@ -194,7 +194,7 @@ class GameOfThronesRepositoryTest {
             assertEquals(emptyList(), result.first())
 
             // Give background coroutine time to complete
-            delay(100)
+            advanceUntilIdle()
 
             // Verify API was called and failed, but flow continued
             coVerify(exactly = 1) { mockHttpClient.fetchBooks() }
@@ -265,7 +265,7 @@ class GameOfThronesRepositoryTest {
             assertEquals(listOf(expectedBookWithCover), result.first())
 
             // Give background coroutine time to complete
-            delay(100)
+            advanceUntilIdle()
 
             // Verify API was called but no cover fetch for empty ISBN
             coVerify(exactly = 1) { mockHttpClient.fetchBooks() }
@@ -310,7 +310,7 @@ class GameOfThronesRepositoryTest {
             assertEquals("Test Character", result[0].name)
 
             // Give background coroutine time to complete
-            delay(100)
+            advanceUntilIdle()
 
             // Verify API was called in background at least once
             coVerify(atLeast = 1) { mockHttpClient.fetchCharacters(0) }
@@ -353,7 +353,7 @@ class GameOfThronesRepositoryTest {
             assertEquals("Test House", result[0].name)
 
             // Give background coroutine time to complete
-            delay(100)
+            advanceUntilIdle()
 
             // Verify API was called in background
             coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
@@ -436,7 +436,7 @@ class GameOfThronesRepositoryTest {
             assertEquals(emptyList(), result)
 
             // Give background coroutine time to complete
-            delay(100)
+            advanceUntilIdle()
 
             // Verify API was called at least once (once in background, once immediate)
             coVerify(atLeast = 1) { mockHttpClient.fetchCharacters(0) }

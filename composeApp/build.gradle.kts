@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.kover)
-    alias(libs.plugins.kover.badge)
 }
 
 kotlin {
@@ -199,11 +198,6 @@ kover {
             }
         }
     }
-}
-
-koverBadge {
-    readme.set(file("../README.md"))
-    badgeLabel.set("coverage")
 }
 
 val ctlf: Task by tasks.creating {

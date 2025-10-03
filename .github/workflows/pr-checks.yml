@@ -52,18 +52,5 @@ jobs:
       - name: Compile iOS
         run: ./gradlew linkDebugFrameworkIosSimulatorArm64
 
-      - name: Add coverage badge to README
-        run: ./gradlew addKoverBadge --no-configuration-cache
-
-      - name: Commit coverage badge
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add README.md
-          git diff --staged --quiet || git commit -m "Update coverage badge"
-
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.head_ref }}
+      - name: Generate coverage report
+        run: ./gradlew koverHtmlReport

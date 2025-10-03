@@ -3,6 +3,7 @@ package com.tillylabs.gameofthroneswiki.ui.books
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,7 +61,9 @@ fun BookDetailsScreen(
         viewModel.loadBookDetails(bookUrl)
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier
+        .fillMaxSize()
+        .background(MaterialTheme.colorScheme.background)) {
         TopAppBar(
             title = { Text("Book Details") },
             navigationIcon = {
@@ -227,11 +230,11 @@ private fun SharedTransitionScope.BookDetailsContent(
                         Modifier
                             .width(200.dp)
                             .aspectRatio(2f / 3f)
-                            .clip(RoundedCornerShape(12.dp))
                             .sharedElement(
                                 rememberSharedContentState(key = "book-cover-${book.url}"),
                                 animatedVisibilityScope,
-                            ),
+                            )
+                            .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop,
                 )
 

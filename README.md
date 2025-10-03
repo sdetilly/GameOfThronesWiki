@@ -1,5 +1,7 @@
 This is a Kotlin Multiplatform project targeting Android, iOS.
 
+[![Coverage](https://img.shields.io/badge/Coverage-Check%20CI-blue)](https://github.com/sdetilly/GameOfThronesWiki/actions)
+
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:
   - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.

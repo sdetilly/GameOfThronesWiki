@@ -144,7 +144,6 @@ private fun BookDetailsContentNoSharedTransition(
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Book cover and basic info
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors =
@@ -189,10 +188,8 @@ private fun BookDetailsContentNoSharedTransition(
             }
         }
 
-        // Publication details
         PublicationDetailsCard(book)
 
-        // Character counts
         if (book.characters.isNotEmpty() || book.povCharacters.isNotEmpty()) {
             CharacterCountsCard(book)
         }
@@ -213,7 +210,6 @@ private fun SharedTransitionScope.BookDetailsContent(
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Book cover and basic info
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors =
@@ -261,10 +257,8 @@ private fun SharedTransitionScope.BookDetailsContent(
             }
         }
 
-        // Publication details
         PublicationDetailsCard(book)
 
-        // Character counts
         if (book.characters.isNotEmpty() || book.povCharacters.isNotEmpty()) {
             CharacterCountsCard(book)
         }

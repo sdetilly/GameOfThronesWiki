@@ -1,11 +1,13 @@
 package com.tillylabs.gameofthroneswiki.http
 
+import com.tillylabs.gameofthroneswiki.IntegrationTest
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@IntegrationTest
 class GameOfThronesHttpTest {
     @Test
     fun testFetchBooks() =

@@ -90,7 +90,6 @@ class GameOfThronesRepository(
     }
 
     private suspend fun loadBooksIfNeeded(lastUpdated: Long?) {
-        // Load books if never loaded (lastUpdated is null) or if data is stale
         val shouldLoad =
             lastUpdated == null ||
                 lastUpdated + 1.minutes.inWholeMilliseconds < getCurrentTimeMillis()

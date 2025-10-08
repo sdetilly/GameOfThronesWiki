@@ -200,6 +200,20 @@ kover {
     }
 }
 
+tasks.withType<Test> {
+    // Exclude integration tests by default
+    if (!project.hasProperty("include-integration-tests")) {
+        exclude("**/IntegrationTest.class", "**/*IntegrationTest.class")
+        // Also exclude by annotation
+        filter {
+            isFailOnNoMatchingTests = false
+        }
+        useJUnit {
+            excludeCategories("com.tillylabs.gameofthroneswiki.IntegrationTest")
+        }
+    }
+}
+
 val ctlf: Task by tasks.creating {
     group = "verification"
     description = "Runs all tests and adds automatic lint fixing"

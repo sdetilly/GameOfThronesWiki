@@ -154,7 +154,6 @@ fun HousesScreen(
                                             CircularProgressIndicator()
                                         }
                                     } else {
-                                        // Trigger load more when this item becomes visible
                                         androidx.compose.runtime.LaunchedEffect(Unit) {
                                             viewModel.loadMoreHouses()
                                         }

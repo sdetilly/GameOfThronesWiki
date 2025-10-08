@@ -160,7 +160,6 @@ fun CharactersScreen(
                                             CircularProgressIndicator()
                                         }
                                     } else {
-                                        // Trigger load more when this item becomes visible
                                         LaunchedEffect(Unit) {
                                             viewModel.loadMoreCharacters()
                                         }

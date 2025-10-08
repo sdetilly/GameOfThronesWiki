@@ -1,37 +1,101 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Game of Thrones Wiki 🐉
 
 [![Coverage](https://img.shields.io/badge/Coverage-Check%20CI-blue)](https://github.com/sdetilly/GameOfThronesWiki/actions)
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+A **real-world example** of Compose Multiplatform best practices with Clean Architecture. Too many tutorials skip the important stuff—this project shows you how it's actually done.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+## 🎯 Why This Project?
 
-### Build and Run Android Application
+Finding production-quality examples of Compose Multiplatform with proper architecture is hard. This project fills that gap by demonstrating:
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+- ✅ **Clean Architecture** — Proper separation with repositories, use cases, and view models
+- ✅ **Modern Stack** — Built with the latest and greatest KMP technologies
+- ✅ **High Test Coverage** — Using Kover to maintain code quality
+- ✅ **Real API Integration** — Not another TODO app, uses the [An API of Ice and Fire](https://anapioficeandfire.com/)
+- ✅ **Regular Updates** — This is a living project, continuously improved
 
-### Build and Run iOS Application
+## 🛠️ Tech Stack
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+| Technology | Purpose |
+|------------|---------|
+| **Compose Multiplatform** | Shared UI across Android & iOS |
+| **Room** | Local database persistence |
+| **Ktor** | Network requests |
+| **Coroutines** | Async operations |
+| **Koin** | Dependency injection |
+| **Coil** | Image loading |
+| **Kover** | Code coverage reporting |
+
+## 📱 What It Does
+
+Browse the Game of Thrones universe with a beautiful, performant app:
+
+- 📚 **Books** — Explore all books in the series
+- 👑 **Characters** — Discover characters and their linked books
+- 🏰 **Houses** — View major and minor houses
+- ✨ **Smooth Transitions** — Polished animations between screens
+- 🎨 **Material Design** — Clean, modern UI/UX
+
+## 🚧 Upcoming Features
+
+- House detail screens with full information (with linked characters and books)
+- Character profile images
+- House sigil images (if available from API)
+- Navigation drawer with random quotes from the Quotes API
+
+## 📊 Code Quality
+
+This project maintains high standards:
+
+- **Architecture** — Clean separation of concerns (data → domain → presentation)
+- **Testing** — Comprehensive test coverage tracked with Kover
+- **CI/CD** — Automated checks on every commit
+- **Documentation** — Code is clear and well-documented
+
+## 🤝 Contributions Welcome!
+
+Found something that could be better? **Please raise an issue!** Whether it's:
+
+- Performance improvements
+- Better architectural patterns
+- Logic errors or bugs
+- Suggestions for cleaner code
+
+This is a learning resource for the community—your feedback makes it better for everyone.
+
+## 🚀 Building the App
+
+### Android
+```shell
+# macOS/Linux
+./gradlew :composeApp:assembleDebug
+
+# Windows
+.\gradlew.bat :composeApp:assembleDebug
+```
+
+Or use the run configuration in your IDE's toolbar.
+
+### iOS
+Open the `/iosApp` directory in Xcode and run, or use the run configuration in your IDE's toolbar.
+
+## 📂 Project Structure
+
+```
+/composeApp
+  └── /src
+      ├── /commonMain      # Shared code for all platforms
+      ├── /androidMain     # Android-specific code
+      ├── /androidUnitTest # Unit tests for common code
+      └── /iosMain         # iOS-specific code
+```
+
+## 📖 Learn More
+
+- [Kotlin Multiplatform Documentation](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)
+- [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/)
+- [An API of Ice and Fire](https://anapioficeandfire.com/)
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+**Built with ❄️ and 🔥 by the KMP community**

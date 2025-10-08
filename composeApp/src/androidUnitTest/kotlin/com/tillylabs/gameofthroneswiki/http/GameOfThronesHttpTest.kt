@@ -3,6 +3,7 @@ package com.tillylabs.gameofthroneswiki.http
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GameOfThronesHttpTest {
@@ -68,6 +69,47 @@ class GameOfThronesHttpTest {
                 assertTrue(firstHouse.url.contains("anapioficeandfire.com"), "House URL should contain API domain")
 
                 println("Successfully fetched ${houses.size} houses")
+            } finally {
+                client.close()
+            }
+        }
+
+    @Test
+    fun testFetchBookByUrl() =
+        runTest {
+            val client = GameOfThronesHttp()
+
+            try {
+                // Fetch books first to get a valid URL
+                val books = client.fetchBooks()
+                assertTrue(books.isNotEmpty(), "Should have books to test with")
+
+                val bookUrl = books.first().url
+
+                // Fetch specific book by URL
+                val book = client.fetchBookByUrl(bookUrl)
+
+                assertNotNull(book, "Book should not be null")
+                assertNotNull(book.name, "Book name should not be null")
+                assertNotNull(book.url, "Book URL should not be null")
+                assertTrue(book.url == bookUrl, "Book URL should match requested URL")
+
+                println("Successfully fetched book: ${book.name}")
+            } finally {
+                client.close()
+            }
+        }
+
+    @Test
+    fun testFetchBookByInvalidUrl() =
+        runTest {
+            val client = GameOfThronesHttp()
+
+            try {
+                val invalidUrl = "https://www.anapioficeandfire.com/api/books/99999"
+                val book = client.fetchBookByUrl(invalidUrl)
+
+                assertNull(book, "Book should be null for invalid URL")
             } finally {
                 client.close()
             }

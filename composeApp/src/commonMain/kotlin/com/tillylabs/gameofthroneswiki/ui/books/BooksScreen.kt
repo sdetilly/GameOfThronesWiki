@@ -264,8 +264,7 @@ private fun SharedTransitionScope.BookItem(
                         .sharedElement(
                             rememberSharedContentState(key = "book-cover-${book.url}"),
                             animatedVisibilityScope,
-                        )
-                        .clip(RoundedCornerShape(8.dp)),
+                        ).clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop,
             )
             Column(

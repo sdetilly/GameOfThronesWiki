@@ -14,4 +14,9 @@ data class BookDetails(
 object Characters
 
 @Serializable
+data class CharacterDetails(
+    val characterUrl: String,
+)
+
+@Serializable
 object Houses

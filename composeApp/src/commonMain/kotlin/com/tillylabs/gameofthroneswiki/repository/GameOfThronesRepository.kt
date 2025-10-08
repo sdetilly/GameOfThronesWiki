@@ -51,6 +51,44 @@ class GameOfThronesRepository(
 
     suspend fun getBookByUrl(url: String): BookWithCover? = database.bookDao().getBookByUrl(url)?.toBookWithCover()
 
+    suspend fun getCharacterByUrl(url: String): Character? = database.characterDao().getCharacterByUrl(url)?.toCharacter()
+
+    suspend fun getBooksByUrls(urls: List<String>): List<BookWithCover> {
+        if (urls.isEmpty()) return emptyList()
+
+        val existingBooks = database.bookDao().getBooksByUrls(urls).map { it.toBookWithCover() }
+        val existingUrls = existingBooks.map { it.url }.toSet()
+
+        val missingUrls = urls.filter { it !in existingUrls }
+
+        if (missingUrls.isNotEmpty()) {
+            val fetchedBooks =
+                missingUrls.mapNotNull { url ->
+                    try {
+                        val book = httpClient.fetchBookByUrl(url) ?: return@mapNotNull null
+                        val coverUrl =
+                            if (book.isbn.isNotBlank()) {
+                                httpClient.fetchBookCover(book.isbn)
+                            } else {
+                                null
+                            }
+                        book.toBookWithCover(coverUrl)
+                    } catch (e: Exception) {
+                        println("Error fetching book $url: ${e.message}")
+                        null
+                    }
+                }
+
+            if (fetchedBooks.isNotEmpty()) {
+                database.bookDao().insertBooks(fetchedBooks.map { it.toBookEntity() })
+            }
+
+            return existingBooks + fetchedBooks
+        }
+
+        return existingBooks
+    }
+
     private suspend fun loadBooksIfNeeded(lastUpdated: Long?) {
         // Load books if never loaded (lastUpdated is null) or if data is stale
         val shouldLoad =

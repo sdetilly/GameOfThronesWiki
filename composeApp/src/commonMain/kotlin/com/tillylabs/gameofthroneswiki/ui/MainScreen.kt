@@ -16,10 +16,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.tillylabs.gameofthroneswiki.ui.books.BookDetailsScreen
 import com.tillylabs.gameofthroneswiki.ui.books.BooksScreen
+import com.tillylabs.gameofthroneswiki.ui.characters.CharacterDetailsScreen
 import com.tillylabs.gameofthroneswiki.ui.characters.CharactersScreen
 import com.tillylabs.gameofthroneswiki.ui.houses.HousesScreen
 import com.tillylabs.gameofthroneswiki.ui.navigation.BookDetails
 import com.tillylabs.gameofthroneswiki.ui.navigation.Books
+import com.tillylabs.gameofthroneswiki.ui.navigation.CharacterDetails
 import com.tillylabs.gameofthroneswiki.ui.navigation.Characters
 import com.tillylabs.gameofthroneswiki.ui.navigation.Houses
 
@@ -73,6 +75,9 @@ fun MainScreen() {
 
             bottomTabComposable<Characters> { backStackEntry ->
                 CharactersScreen(
+                    onCharacterClick = { characterUrl ->
+                        navController.navigate(CharacterDetails(characterUrl))
+                    },
                     onNavigateToBooks = {
                         navController.navigate(Books) {
                             popUpTo(Books) {
@@ -91,6 +96,15 @@ fun MainScreen() {
                         }
                     },
                     viewModelStoreOwner = backStackEntry,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+
+            composable<CharacterDetails> { backStackEntry ->
+                val characterDetails = backStackEntry.toRoute<CharacterDetails>()
+                CharacterDetailsScreen(
+                    characterUrl = characterDetails.characterUrl,
+                    onNavigateBack = { navController.navigateUp() },
                     modifier = Modifier.fillMaxSize(),
                 )
             }

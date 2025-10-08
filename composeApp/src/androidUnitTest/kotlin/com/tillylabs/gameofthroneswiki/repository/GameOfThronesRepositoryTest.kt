@@ -457,4 +457,202 @@ class GameOfThronesRepositoryTest {
             assertEquals(emptyList(), result)
             coVerify(exactly = 1) { mockHttpClient.fetchHouses(1) }
         }
+
+    @Test
+    fun `getBooksByUrls should return books from database when all exist`() =
+        runTest {
+            // Given
+            val bookUrls =
+                listOf(
+                    "https://anapioficeandfire.com/api/books/1",
+                    "https://anapioficeandfire.com/api/books/2",
+                )
+            val bookEntities =
+                listOf(
+                    BookEntity(
+                        url = bookUrls[0],
+                        name = "A Game of Thrones",
+                        isbn = "978-0553103540",
+                        authors = listOf("George R. R. Martin"),
+                        numberOfPages = 694,
+                        publisher = "Bantam Books",
+                        country = "United States",
+                        mediaType = "Hardcover",
+                        released = "1996-08-01T00:00:00",
+                        characters = emptyList(),
+                        povCharacters = emptyList(),
+                        coverImageUrl = "https://example.com/cover1.jpg",
+                    ),
+                    BookEntity(
+                        url = bookUrls[1],
+                        name = "A Clash of Kings",
+                        isbn = "978-0553108033",
+                        authors = listOf("George R. R. Martin"),
+                        numberOfPages = 761,
+                        publisher = "Bantam Books",
+                        country = "United States",
+                        mediaType = "Hardcover",
+                        released = "1999-02-01T00:00:00",
+                        characters = emptyList(),
+                        povCharacters = emptyList(),
+                        coverImageUrl = "https://example.com/cover2.jpg",
+                    ),
+                )
+
+            coEvery { mockBookDao.getBooksByUrls(bookUrls) } returns bookEntities
+
+            // When
+            val result = repository.getBooksByUrls(bookUrls)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals("A Game of Thrones", result[0].name)
+            assertEquals("A Clash of Kings", result[1].name)
+            coVerify(exactly = 0) { mockHttpClient.fetchBookByUrl(any()) }
+        }
+
+    @Test
+    fun `getBooksByUrls should fetch missing books from API and cache them`() =
+        runTest {
+            // Given
+            val existingUrl = "https://anapioficeandfire.com/api/books/1"
+            val missingUrl = "https://anapioficeandfire.com/api/books/2"
+            val bookUrls = listOf(existingUrl, missingUrl)
+
+            val existingBook =
+                BookEntity(
+                    url = existingUrl,
+                    name = "A Game of Thrones",
+                    isbn = "978-0553103540",
+                    authors = listOf("George R. R. Martin"),
+                    numberOfPages = 694,
+                    publisher = "Bantam Books",
+                    country = "United States",
+                    mediaType = "Hardcover",
+                    released = "1996-08-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                    coverImageUrl = "https://example.com/cover1.jpg",
+                )
+
+            val fetchedBook =
+                Book(
+                    url = missingUrl,
+                    name = "A Clash of Kings",
+                    isbn = "978-0553108033",
+                    authors = listOf("George R. R. Martin"),
+                    numberOfPages = 761,
+                    publisher = "Bantam Books",
+                    country = "United States",
+                    mediaType = "Hardcover",
+                    released = "1999-02-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                )
+
+            coEvery { mockBookDao.getBooksByUrls(bookUrls) } returns listOf(existingBook)
+            coEvery { mockHttpClient.fetchBookByUrl(missingUrl) } returns fetchedBook
+            coEvery { mockHttpClient.fetchBookCover(fetchedBook.isbn) } returns "https://example.com/cover2.jpg"
+            coEvery { mockBookDao.insertBooks(any()) } returns Unit
+
+            // When
+            val result = repository.getBooksByUrls(bookUrls)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals("A Game of Thrones", result[0].name)
+            assertEquals("A Clash of Kings", result[1].name)
+            assertEquals("https://example.com/cover2.jpg", result[1].coverImageUrl)
+
+            // Verify API was called for missing book
+            coVerify(exactly = 1) { mockHttpClient.fetchBookByUrl(missingUrl) }
+            coVerify(exactly = 1) { mockHttpClient.fetchBookCover(fetchedBook.isbn) }
+            coVerify(exactly = 1) { mockBookDao.insertBooks(any()) }
+        }
+
+    @Test
+    fun `getBooksByUrls should handle API errors gracefully`() =
+        runTest {
+            // Given
+            val existingUrl = "https://anapioficeandfire.com/api/books/1"
+            val missingUrl = "https://anapioficeandfire.com/api/books/2"
+            val bookUrls = listOf(existingUrl, missingUrl)
+
+            val existingBook =
+                BookEntity(
+                    url = existingUrl,
+                    name = "A Game of Thrones",
+                    isbn = "978-0553103540",
+                    authors = listOf("George R. R. Martin"),
+                    numberOfPages = 694,
+                    publisher = "Bantam Books",
+                    country = "United States",
+                    mediaType = "Hardcover",
+                    released = "1996-08-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                    coverImageUrl = "https://example.com/cover1.jpg",
+                )
+
+            coEvery { mockBookDao.getBooksByUrls(bookUrls) } returns listOf(existingBook)
+            coEvery { mockHttpClient.fetchBookByUrl(missingUrl) } throws RuntimeException("API Error")
+
+            // When
+            val result = repository.getBooksByUrls(bookUrls)
+
+            // Then - should return only the existing book
+            assertEquals(1, result.size)
+            assertEquals("A Game of Thrones", result[0].name)
+            coVerify(exactly = 1) { mockHttpClient.fetchBookByUrl(missingUrl) }
+        }
+
+    @Test
+    fun `getBooksByUrls should return empty list for empty input`() =
+        runTest {
+            // When
+            val result = repository.getBooksByUrls(emptyList())
+
+            // Then
+            assertEquals(emptyList(), result)
+            coVerify(exactly = 0) { mockBookDao.getBooksByUrls(any()) }
+            coVerify(exactly = 0) { mockHttpClient.fetchBookByUrl(any()) }
+        }
+
+    @Test
+    fun `getBooksByUrls should handle books without ISBN`() =
+        runTest {
+            // Given
+            val missingUrl = "https://anapioficeandfire.com/api/books/99"
+            val bookUrls = listOf(missingUrl)
+
+            val fetchedBook =
+                Book(
+                    url = missingUrl,
+                    name = "Book Without ISBN",
+                    isbn = "",
+                    authors = listOf("Unknown"),
+                    numberOfPages = 100,
+                    publisher = "Unknown",
+                    country = "Unknown",
+                    mediaType = "Unknown",
+                    released = "2000-01-01T00:00:00",
+                    characters = emptyList(),
+                    povCharacters = emptyList(),
+                )
+
+            coEvery { mockBookDao.getBooksByUrls(bookUrls) } returns emptyList()
+            coEvery { mockHttpClient.fetchBookByUrl(missingUrl) } returns fetchedBook
+            coEvery { mockBookDao.insertBooks(any()) } returns Unit
+
+            // When
+            val result = repository.getBooksByUrls(bookUrls)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals("Book Without ISBN", result[0].name)
+            assertEquals(null, result[0].coverImageUrl)
+
+            // Verify no cover fetch was attempted for empty ISBN
+            coVerify(exactly = 0) { mockHttpClient.fetchBookCover(any()) }
+        }
 }

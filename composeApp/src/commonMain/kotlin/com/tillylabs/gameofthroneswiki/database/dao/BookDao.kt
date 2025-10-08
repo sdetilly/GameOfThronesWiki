@@ -33,6 +33,9 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE url = :url")
     suspend fun getBookByUrl(url: String): BookEntity?
 
+    @Query("SELECT * FROM books WHERE url IN (:urls)")
+    suspend fun getBooksByUrls(urls: List<String>): List<BookEntity>
+
     @Query("SELECT MAX(lastUpdated) FROM books")
     suspend fun getLastUpdatedTimestamp(): Long?
 }

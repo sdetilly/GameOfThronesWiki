@@ -61,9 +61,12 @@ fun BookDetailsScreen(
         viewModel.loadBookDetails(bookUrl)
     }
 
-    Column(modifier = modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+    ) {
         TopAppBar(
             title = { Text("Book Details") },
             navigationIcon = {
@@ -233,8 +236,7 @@ private fun SharedTransitionScope.BookDetailsContent(
                             .sharedElement(
                                 rememberSharedContentState(key = "book-cover-${book.url}"),
                                 animatedVisibilityScope,
-                            )
-                            .clip(RoundedCornerShape(12.dp)),
+                            ).clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop,
                 )
 

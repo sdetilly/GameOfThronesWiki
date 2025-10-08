@@ -53,6 +53,13 @@ class GameOfThronesHttp {
                 parameter("pageSize", PAGE_SIZE)
             }.body()
 
+    suspend fun fetchBookByUrl(url: String): Book? =
+        try {
+            httpClient.get(url).body()
+        } catch (e: Exception) {
+            null
+        }
+
     suspend fun fetchBookCover(isbn: String): String? =
         try {
             httpClient

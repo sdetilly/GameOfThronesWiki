@@ -41,6 +41,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CharactersScreen(
+    onCharacterClick: (String) -> Unit = {},
     onNavigateToBooks: () -> Unit = {},
     onNavigateToHouses: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -140,7 +141,10 @@ fun CharactersScreen(
                                     .PaddingValues(16.dp),
                         ) {
                             items(uiState.characters) { character ->
-                                CharacterItem(character = character)
+                                CharacterItem(
+                                    character = character,
+                                    onClick = { onCharacterClick(character.url) },
+                                )
                             }
 
                             if (uiState.hasMoreData) {
@@ -183,9 +187,11 @@ fun CharactersScreen(
 @Composable
 private fun CharacterItem(
     character: Character,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
+        onClick = onClick,
         modifier =
             modifier
                 .fillMaxWidth()

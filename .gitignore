@@ -17,3 +17,9 @@ out/
 .kotlin/
 composeApp/build/
 gradle-wrapper.properties
+
+# Recording outputs
+Gifs/*.gif
+Gifs/*.mp4
+temp_recording.mp4
+temp_palette.png
